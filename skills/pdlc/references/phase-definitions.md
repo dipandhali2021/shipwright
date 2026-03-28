@@ -67,6 +67,13 @@ The orchestrator MUST include the required reading list in every agent spawn inv
    - Spawn research-analyst: read ALL wave 1-2 outputs, score candidates, recommend top pick
    - Writes to `.pdlc/research/project-selection.md`
 
+4. **Research artifact commits (after each wave):**
+   - After each research agent produces its artifact, github-ops-manager commits it individually
+   - Conventional commit prefix: `research:` (e.g., `research: add trend scan results`, `research: add market analysis`, `research: add competitive landscape`, `research: add project selection report`)
+   - Each research commit is a separate session with a random 1–2 hour rest between commits
+   - This makes the research phase look like a multi-day effort, not a single burst
+   - Commits are staggered using `GIT_AUTHOR_DATE`/`GIT_COMMITTER_DATE` for realistic timestamps
+
 ### Scoring Rubric
 Each candidate project is scored on 4 dimensions (0-25 each, total 0-100):
 
@@ -84,6 +91,7 @@ Each candidate project is scored on 4 dimensions (0-25 each, total 0-100):
 - At least one project scores >= 60
 - Project selection includes: name, description, target users, key differentiator, estimated sprint count
 - `config.json` updated: `current_phase: "PLANNING"`, `project_name` set
+- All research artifacts committed individually with `research:` prefix and realistic 1–2 hour gaps between commits
 
 ### Error Handling
 - If all projects score < 60: retry with broader search terms (max 3 research cycles)
@@ -268,47 +276,62 @@ All artifacts are written to identical paths as subagent mode. Entry/exit criter
    - Spawn build-engineer: configure build system
    - Spawn dependency-manager: initialize package management
 
-3. **Story execution with daily standups (parallel, step 2/3):**
-   - task-distributor reads sprint plan and assigns stories based on planning meeting commitments
-   - multi-agent-coordinator manages parallel execution (max 4 concurrent)
-   - Each development agent:
-     - Reads the story requirements from sprint plan
-     - Reads architecture docs for context
-     - **Reads their coaching profile** from `.pdlc/retrospective/coaching/[agent-name].md` if it exists — these coaching notes from past 1:1 meetings are applied to current work
-     - **For UI stories (if Stitch MCP available):**
-       - Use `stitch-loop` for multi-page scaffold generation (sprint 1)
-       - Use `react-components` to convert Stitch designs into validated React component code
-       - Use `shadcn-ui` for React projects using shadcn/ui library integration
-     - Writes code to appropriate source directories
-     - Creates basic tests for their code
-   - **After each wave of story completions, run a Daily Standup:**
-     - scrum-master facilitates a conversational standup with all active agents
-     - Each agent reports: Done, Working on, Blockers
-     - Blockers are resolved in real-time (reassign, spawn helper, adjust sequence)
-     - Transcript appended to `.pdlc/sprints/sprint-N/meetings/standups.md`
-   - **External skill integration (if available):**
-     - Invoke `standup-meeting` skill for format structure (default: 3-Question format)
-     - Time-box enforcement: 15 minutes maximum per standup
-     - Blocker accountability: every blocker gets an owner and a deadline
-     - Rule: "No problem-solving during standup" -- surface blockers, solve offline
-   - **If skill not installed:** Fall back to the built-in standup format
-   - documentation-engineer updates docs as code is written
+3. **Day-by-day story execution (step 2/3, 6 sprint days):**
 
-4. **Integration (step 4):**
-   - multi-agent-coordinator merges all agent outputs
-   - Resolves any conflicts between parallel work streams
+   The sprint spans 7 days total: Monday (planning) → Sunday (integration + ceremonies).
+   Development runs Tuesday–Sunday as a **session-based model** where each Claude session handles one subtask per agent, then stops.
 
-5. **Standup logging (continuous):**
-   - After each wave of agent work completes, append a standup entry to `.pdlc/sprints/sprint-N/standups.md`
-   - Capture: what was completed, what's in progress, blockers, notable observations
-   - This creates a real-time narrative of the sprint's progress
+   **Daily cycle (Day 1–6, Tuesday–Sunday):**
 
-6. **Decision journaling (continuous):**
+   a. **Morning standup** — scrum-master + all active agents
+      - Yesterday's subtasks completed (count + descriptions)
+      - Today's planned subtasks
+      - Story progress (subtasks done/total per story)
+      - Blockers
+      - Transcript appended to `.pdlc/sprints/sprint-N/meetings/standups.md`
+      - **External skill integration:** Invoke `standup-meeting` skill if available (3-Question format, 15 min max, blocker accountability)
+
+   b. **Session-based subtask execution** — one subtask per agent per session
+      - Each story is pre-decomposed into 8–12 subtasks (defined during sprint planning)
+      - Agent picks up their NEXT subtask → reads story requirements + architecture docs + coaching profile → completes it → commits
+      - Max 4 concurrent agents per session
+      - **For UI subtasks (if Stitch MCP available):** Use `stitch-loop`, `react-components`, `shadcn-ui` as appropriate
+      - Session ends after all agents commit their subtask
+      - **1–2 hour rest before next session** (natural gap between commits)
+      - **5–12 sessions per day** (randomized daily — varies to look natural)
+
+   c. **Subtask commit protocol** — github-ops-manager per subtask
+      - Proper conventional commit after each completed subtask (`feat:`, `fix:`, `test:`, `refactor:`, `chore:`)
+      - All commits include `Refs #N` for issue linking
+      - **Staggered timestamps per agent** — each agent commits at a different time within the session using `GIT_AUTHOR_DATE`/`GIT_COMMITTER_DATE`. Times randomized across morning (9–12), afternoon (13–17), evening (18–21) with lunch gap.
+      - **No WIP commits** — every commit represents a complete subtask
+      - documentation-engineer updates docs as code is written
+
+   d. **End-of-day status** — each agent logs:
+      - Subtasks completed today (with commit SHAs)
+      - Story progress (subtasks done/total)
+      - What carries over to tomorrow
+      - Appended to `.pdlc/sprints/sprint-N/agent-log.md`
+
+   **Day schedule:**
+   - Day 1 (Tue): Infrastructure subtasks + first subtasks of priority stories
+   - Day 2 (Wed): Continue subtasks, new stories start as agents free up
+   - Day 3 (Thu): Core stories progressing, dependencies resolving
+   - Day 4 (Fri): Stories advancing, mid-sprint check
+   - Day 5 (Sat): Most stories targeting completion
+   - Day 6 (Sun AM): Final subtasks, bug fixes
+   - Day 6 (Sun PM): Sprint Integration → Sprint Review → Sprint Retro
+
+4. **Integration (Sunday PM, step 4):**
+   - Orchestrator verifies all agent outputs compile and integrate
+   - Resolves any conflicts between parallel work
+   - multi-agent-coordinator merges final outputs (subagent mode) or Team Lead verifies TaskList completion (agent-teams mode)
+
+5. **Decision journaling (continuous):**
    - When any agent makes a significant technical decision, append to `.pdlc/architecture/decision-journal.md`
    - Capture: options considered, tradeoffs, chosen approach, reasoning, what would change the decision
-   - This is what makes the system think like engineers, not just execute tasks
 
-7. **Tech debt tracking (continuous):**
+6. **Tech debt tracking (continuous):**
    - When any agent introduces a shortcut, TODO, or known limitation, add to `.pdlc/retrospective/tech-debt.md`
    - Each debt item has: description, severity, estimated paydown effort, introducing sprint
 
@@ -316,11 +339,13 @@ All artifacts are written to identical paths as subagent mode. Entry/exit criter
 - All planned stories have code written (or explicitly deferred with reason)
 - Basic tests exist for new code
 - Code compiles/runs without errors
-- Sprint agent log written to `.pdlc/sprints/sprint-N/agent-log.md` with contribution details (files, decisions, tradeoffs)
-- Standup log written to `.pdlc/sprints/sprint-N/standups.md`
+- Git history shows day-by-day commit progression with staggered timestamps per agent (5–12 commits per agent per day)
+- Sprint agent log written to `.pdlc/sprints/sprint-N/agent-log.md` with daily subtask progress per agent
+- Standup log written to `.pdlc/sprints/sprint-N/standups.md` with subtask tracking (done/total)
 - Decision journal updated if significant decisions were made
 - Tech debt register updated if shortcuts were introduced
 - Spike notes written if exploratory stories existed
+- `session_progress` in config.json reflects final state of all agent subtask positions
 - `CLAUDE.md` updated if sprint changes affected repo structure, architecture, or workflows
 - `config.json` updated: phase transitions to `"TESTING"`
 

@@ -85,6 +85,21 @@ All runtime file templates created by the PDLC orchestrator in the target projec
     "phases_using_teams": [],
     "fallback_count": 0
   },
+  "session_progress": {
+    "current_sprint_day": 0,
+    "sprint_start_date": "YYYY-MM-DD",
+    "daily_commit_target": 0,
+    "agents": {
+      "[agent-name]": {
+        "current_story": "S-N-XX",
+        "subtasks_total": 10,
+        "subtasks_completed": 0,
+        "current_subtask": 1,
+        "commits_today": 0,
+        "last_commit_time": "HH:MM"
+      }
+    }
+  },
   "role_hierarchy": {
     "manager": "pdlc-orchestrator",
     "product_manager": "product-manager",
@@ -94,6 +109,8 @@ All runtime file templates created by the PDLC orchestrator in the target projec
 ```
 
 **Valid `current_phase` values:** `INIT`, `RESEARCH`, `PLANNING`, `DESIGN`, `DEVELOPMENT`, `TESTING`, `DEPLOYMENT`, `REVIEW`, `IMPROVE`, `COMPLETE`
+
+**Session progress:** Updated after every subtask commit. `current_sprint_day` ranges 0 (planning) to 6 (Sunday). `daily_commit_target` is randomized 5–12 at the start of each day. Each agent's entry tracks their position within their current story's subtask list.
 
 ---
 
@@ -179,6 +196,36 @@ All runtime file templates created by the PDLC orchestrator in the target projec
 | S-N-02 | [Story title] | [Brief description] | [agent-name] | X | P1 | S-N-01 |
 | S-N-03 | [Story title] | [Brief description] | [agent-name] | X | P1 | — |
 | S-N-04 | [Story title] | [Brief description] | [agent-name] | X | P2 | — |
+
+## Subtask Breakdown
+
+Each story is decomposed into 8–12 subtasks. Each subtask = one commit.
+
+### Story S-N-01: [Story title] — [agent-name]
+
+Subtasks:
+1. [ ] [First subtask description]
+2. [ ] [Second subtask description]
+3. [ ] [Third subtask description]
+...
+
+### Story S-N-02: [Story title] — [agent-name]
+
+Subtasks:
+1. [ ] [First subtask description]
+2. [ ] [Second subtask description]
+...
+
+## Day Targets
+
+| Day | Stories Active | Target Subtasks |
+|-----|--------------|-----------------|
+| Day 1 (Tue) | S-N-01, S-N-03, S-N-04 | First 2–3 subtasks each |
+| Day 2 (Wed) | S-N-01, S-N-02, S-N-03 | Continue + S-N-02 starts (S-N-01 unblocks it) |
+| Day 3 (Thu) | All active | Mid-point subtasks |
+| Day 4 (Fri) | All active | Stories advancing |
+| Day 5 (Sat) | All active | Targeting completion |
+| Day 6 (Sun) | Remaining | Final subtasks + integration |
 
 ## Execution Order
 1. **Parallel group 1 (no dependencies):** S-N-01, S-N-03, S-N-04

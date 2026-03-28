@@ -197,10 +197,10 @@ The orchestrator uses these skills to enhance ceremonies and GitHub workflows wh
 
 After the orchestrator completes, read the produced artifacts and present a concise summary to the user:
 
-- **After RESEARCH:** Show selected project name, score, and key differentiator
-- **After PLANNING:** Show feature count, sprint count, and key milestones
+- **After RESEARCH:** Show selected project name, score, and key differentiator. Research artifacts are committed individually with realistic 1–2 hour gaps between commits (trend scan, market analysis, competitive landscape, project selection).
+- **After PLANNING:** Show feature count, sprint count, key milestones, and subtask breakdown per story
 - **After DESIGN:** Show tech stack decision and architecture summary
-- **After DEVELOPMENT:** Show stories completed vs planned, any blockers
+- **After DEVELOPMENT:** Show stories completed vs planned, subtasks done/total per agent, commit count per day. Sprint execution follows a 7-day schedule (Mon planning → Sun integration) with session-based subtask commits.
 - **After TESTING:** Show test pass rate, issues found/resolved
 - **After DEPLOYMENT:** Show deployment status
 - **After REVIEW:** Show velocity trend, retrospective highlights

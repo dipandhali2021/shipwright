@@ -84,34 +84,58 @@ You have access to 7 sprint-related skills. Check availability before each cerem
 
 ### 2. Daily Standup
 
-**When:** After each wave of story completions during sprint execution
+**When:** Start of each sprint day (Day 1–6, Tuesday–Sunday)
 **Participants:** scrum-master agent, all active development agents
 **Duration:** 15 minutes maximum
 
 **Execution Flow:**
-1. **Format selection** — Invoke `standup-meeting` skill:
+1. **Read session progress** — Read `.pdlc/config.json` `session_progress` to know:
+   - Current sprint day number
+   - Each agent's current story and subtask position (subtasks done/total)
+   - Commits completed yesterday per agent
+
+2. **Format selection** — Invoke `standup-meeting` skill:
    - Default: 3-Question format (Done / Today / Blockers)
    - If many blocked items: switch to Walking-the-Board format
    - Low-ceremony sprints: Async format
 
-2. **Collect updates** — Each agent reports:
-   - **Done**: What was completed since last standup
-   - **Today**: What they're working on next
+3. **Collect updates** — Each agent reports using subtask-level granularity:
+   - **Yesterday**: Subtasks completed (count + descriptions, with commit SHAs)
+   - **Today**: Planned subtasks for today's sessions
+   - **Story progress**: Subtasks done/total per story (e.g., "7/10 subtasks done")
    - **Blockers**: Anything preventing progress
+   - **Carryover**: Which subtasks remain from yesterday
 
-3. **Blocker resolution:**
+   Example standup format:
+   ```
+   Standup — Day 3 (Thursday)
+
+   react-specialist:
+     Yesterday: 3 subtasks — form validation, login API, error handling
+     Today: Signup form, signup API, login tests
+     Story S-1-01: 7/10 subtasks done
+     Blockers: None
+
+   backend-developer:
+     Yesterday: 3 subtasks — auth middleware, JWT tokens, password hashing
+     Today: Integration tests, error responses, rate limiting
+     Story S-1-02: 5/10 subtasks done
+     Blockers: Need JWT_SECRET in env
+   ```
+
+4. **Blocker resolution:**
    - Every blocker gets an assigned owner and deadline
    - Blockers appearing 2+ standups → escalate to pdlc-orchestrator
    - **Rule: No problem-solving during standup** — surface issues, schedule offline discussion
 
-4. **Write artifacts:**
+5. **Write artifacts:**
    - Append to `.pdlc/sprints/sprint-N/meetings/standups.md`
 
 ---
 
 ### 3. Sprint Review Meeting
 
-**When:** End of sprint (Friday)
+**When:** End of sprint (Sunday PM)
 **Participants:** scrum-master agent, product-manager, all sprint agents, simulated user personas
 **Duration:** 30-60 minutes
 
@@ -149,7 +173,7 @@ You have access to 7 sprint-related skills. Check availability before each cerem
 
 ### 4. Sprint Retrospective
 
-**When:** After sprint review (Friday)
+**When:** After sprint review (Sunday PM)
 **Participants:** scrum-master agent, ALL agents who participated in the sprint
 **Duration:** 1 hour maximum
 
@@ -249,3 +273,21 @@ Required Reading:
 ```
 
 The agent runs the ceremony, writes all artifacts, and returns a summary to the orchestrator.
+
+## Session-Based Sprint Execution
+
+The sprint runs as a series of short Claude sessions across a 7-day week (Monday planning → Sunday integration). Each session:
+
+1. All active agents complete ONE subtask from their current story
+2. github-ops-manager commits each subtask (staggered timestamps per agent)
+3. Session ends after all agents commit their subtask
+4. 1–2 hour natural gap before next session
+
+**Key awareness for ceremonies:**
+- Stories are decomposed into 8–12 subtasks during sprint planning
+- Agents do 5–12 subtasks per day (varies randomly per day)
+- Track progress as **subtasks done/total**, not story percentage
+- Standups run at the start of each sprint day (Day 1–6, Tuesday–Sunday)
+- Read `.pdlc/config.json` `session_progress` to know each agent's current subtask position
+- Carryover tracking: which subtasks remain from yesterday carries into the next day's standup
+- Both subagent and agent-teams modes follow the same day/session structure

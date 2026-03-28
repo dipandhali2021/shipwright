@@ -2,6 +2,16 @@
 
 Complete mapping of all agents to PDLC phases and project types. Read this file when you need to decide which agents to spawn for a given phase or project type.
 
+## Session Execution Protocol
+
+All agents operate under a **session-based execution model** during sprint development:
+- Each Claude session = one subtask per agent. Session ends after all agents commit their subtask.
+- Stories are decomposed into 8–12 subtasks. Each subtask = one conventional commit.
+- Agents resume from `config.json` → `session_progress` in the next session.
+- 1–2 hour natural gap between sessions. 5–12 subtask sessions per day (randomized).
+- `github-ops-manager` commits each subtask with staggered timestamps per agent (`GIT_AUTHOR_DATE`/`GIT_COMMITTER_DATE`) so commits appear at different times.
+- Sprint spans 7 days (Monday planning → Sunday integration). Standups track subtasks done/total.
+
 ## Required Reading Protocol
 
 All agents listed below are subject to the Required Reading Protocol defined in `phase-definitions.md`. When spawning any agent, the orchestrator MUST include the required reading list for that phase. Additionally, every agent's coaching profile (if it exists at `.pdlc/retrospective/coaching/[agent-name].md`) MUST be loaded and prepended to the agent's context. This is the core self-improvement mechanism.
@@ -238,7 +248,7 @@ These agents are invoked by the pdlc-orchestrator as infrastructure, not as phas
 | performance-monitor | Metrics collection | Phases 7, 8 | Kept in both modes |
 | knowledge-synthesizer | Learning and improvement | Phase 8 | Kept in both modes |
 | sprint-ceremony-manager | Sprint ceremony coordination, skill invocation | Phases 4, 7 (all ceremonies) | Kept — becomes Teammate (facilitator) in agent-teams mode |
-| github-ops-manager | GitHub operations: commits, PRs, issues, releases, PR reviews | Phases 2-8 (all code phases) | Kept — becomes Teammate (ops) in agent-teams mode |
+| github-ops-manager | GitHub operations: commits, PRs, issues, releases, PR reviews. Invoked 5–12x per agent per day for subtask commits with staggered timestamps. | Phases 1-8 (all phases including research commits) | Kept — becomes Teammate (ops) in agent-teams mode |
 | it-ops-orchestrator | IT operations workflow coordination | Phase 6 (if complex IT ops) | Kept in both modes |
 | agent-installer | Browse and install agents from repository (utility, not auto-spawned) | Manual invocation only | N/A |
 

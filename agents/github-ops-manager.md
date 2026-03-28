@@ -31,7 +31,10 @@ You have access to 6 GitHub-related skills. Check availability before each opera
 ## PDLC Phase Integration
 
 ### Phase 1: RESEARCH
-No GitHub operations — research is pre-repository.
+| Operation | Skill | Details |
+|-----------|-------|---------|
+| Commit research artifacts | `git-commit` | Commit each research output individually as it's produced (trend scan, market analysis, competitive landscape, project selection) with `research:` prefix |
+| Stagger research commits | `git-commit` | Random 1–2 hour gaps between research commits (each commit is a separate session). Use `GIT_AUTHOR_DATE`/`GIT_COMMITTER_DATE` for realistic timestamps |
 
 ### Phase 2: PLANNING
 | Operation | Skill | Details |
@@ -103,15 +106,28 @@ When a new sprint begins:
 
 ### During Sprint Workflow
 
-After each story completion:
+Each story is decomposed into 8–12 subtasks. The sprint runs as a series of short Claude sessions across 6 dev days (Tuesday–Sunday). Each session handles one subtask per agent:
 
-1. **Stage and commit**: Invoke `git-commit` skill
-   - Uses conventional commit format: `feat(scope): description`
-   - Includes `Refs #N` for the story's issue number
-2. **Update issue**: Invoke `github-issues` skill
-   - Add completion comment with details
-   - Move to "Done" status
-3. **Link commit to issue**: Ensure commit SHA appears in issue timeline
+1. **Subtask commits (one per agent per session):** Invoke `git-commit` skill
+   - After each completed subtask: proper conventional commit (`feat:`/`fix:`/`test:`/`refactor:`/`chore:`)
+   - No WIP commits — every commit is a complete, self-contained unit of work
+   - Include `Refs #N` linking to the story's GitHub issue
+
+2. **Staggered commit timestamps per agent:**
+   - Each agent commits at a different time within the session
+   - Use `GIT_AUTHOR_DATE` and `GIT_COMMITTER_DATE` env vars to set realistic times
+   - Randomize across work hours: morning (9–12), afternoon (13–17), evening (18–21)
+   - Include realistic gaps: lunch break (12–13), short breaks between commits
+   - Different agents have different "work styles" — some commit early morning, others late afternoon
+   - Read `session_progress` from `.pdlc/config.json` to determine agent timing offsets
+
+3. **Update issue progress:** Invoke `github-issues` skill
+   - Add progress comment: subtasks done/total, files touched
+   - Move to "Done" only when ALL subtasks for that story are complete
+
+4. **Link all commits to issues:** Every subtask commit includes `Refs #N`
+
+5. **Daily commit volume:** Each agent produces 5–12 subtask commits per day (varies randomly per day, not fixed)
 
 ### Sprint End Workflow
 

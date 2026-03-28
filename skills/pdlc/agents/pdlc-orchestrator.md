@@ -230,32 +230,40 @@ The meeting minutes capture: who said what, which stories were debated, final co
 **Participants:** scrum-master (facilitator), all active development agents
 **Output:** Appended to `.pdlc/sprints/sprint-N/meetings/standups.md`
 
-Run after each wave of agent work (simulating daily cadence):
+Run at the start of each sprint day (Day 1–6, Tuesday–Sunday). The standup marks the day boundary and tracks subtask-level progress:
 
 ```
-Standup — Day N
+Standup — Day 3 (Thursday)
 
-scrum-master: "Let's go around. What did you accomplish, what's next, any blockers?"
+scrum-master: "Let's go around. Subtask progress, today's plan, any blockers?"
 
 react-specialist:
-  Done: Completed Story S-2-01 (login form + validation)
-  Today: Starting S-2-03 (dashboard layout)
+  Yesterday: 3 subtasks — form validation, login API integration, error handling
+  Today: Signup form component, signup API integration, login unit tests
+  Story S-1-01: 7/10 subtasks done
   Blockers: None
 
 backend-developer:
-  Done: S-2-02 API endpoints 80% complete
-  Today: Finishing auth middleware + writing tests
-  Blockers: Need the JWT secret config — who's handling env setup?
+  Yesterday: 3 subtasks — auth middleware, JWT token generation, password hashing
+  Today: Integration tests, error responses, rate limiting
+  Story S-1-02: 5/10 subtasks done
+  Blockers: Need JWT_SECRET in env config
 
 devops-engineer:
   Response to blocker: I'll add JWT_SECRET to the env template. Will be ready in 1 hour.
+  Yesterday: 2 subtasks — CI pipeline setup, Docker config
+  Today: Env management, deployment scripts
+  Story S-1-03: 4/10 subtasks done
 
 scrum-master:
   Action: devops-engineer unblocks backend-developer on env config
-  Observation: We're ahead on frontend, slightly behind on backend. Looks on track overall.
+  Observation: Frontend on track (7/10), backend slightly behind (5/10). Overall healthy.
 ```
 
 Key behaviors:
+- Track progress as **subtasks done/total** per story, not story percentage
+- Carryover tracking: which subtasks remain from yesterday
+- Read `.pdlc/config.json` `session_progress` for each agent's current position
 - Agents identify blockers that the orchestrator resolves by reassigning or spawning helper agents
 - If an agent is stuck, scrum-master can reassign the story or bring in a pairing agent
 - Cross-agent dependencies are surfaced and resolved in real-time
@@ -266,39 +274,128 @@ Key behaviors:
 3. Agent produces `.pdlc/sprints/sprint-N/spikes.md` with findings and Go/No-Go recommendation
 4. Results shared in the next standup — team adjusts plan if needed
 
+### Story Subtask Decomposition
+
+During sprint planning (or at story start), each story is broken into **8–12 subtasks**. Subtasks are granular, committable units of work:
+
+```
+Story S-1-01: User Authentication UI (5 points) — react-specialist
+
+Subtasks:
+  1. Create auth page layout and routing
+  2. Build login form component with fields
+  3. Add form validation logic
+  4. Implement login API integration
+  5. Add error handling and error states
+  6. Build signup form component
+  7. Add signup API integration
+  8. Write unit tests for login form
+  9. Write unit tests for signup form
+  10. Add loading states and UX polish
+```
+
+Subtask breakdown is written to `.pdlc/sprints/sprint-N/plan.md` alongside each story. Each subtask maps to exactly one conventional commit (no WIP commits).
+
+### Session-Based Execution Model
+
+Each Claude session = one round of subtasks across all active agents:
+
+```
+Session Model:
+
+1. Session starts
+2. Each active agent picks up their NEXT subtask from their story
+3. Agent completes the subtask → github-ops-manager commits it
+   - Proper conventional commit: feat:/fix:/test:/refactor:/chore:
+   - Includes Refs #N for issue linking
+   - Each agent's commit happens at a DIFFERENT time (staggered)
+4. All agents done with their subtask for this round → SESSION ENDS
+5. Natural 1–2 hour break (gap between sessions = gap between commits)
+6. Next session starts → agents pick up next subtask → repeat
+
+This means:
+- In a day, there are 5–12 sessions (one subtask per agent per session, varies daily)
+- Each session is short (one subtask per agent)
+- The 1–2 hour gaps between sessions create realistic commit timing
+- Different agents commit at staggered times within each session
+```
+
+### Staggered Commit Timing
+
+Within each session, agents don't all commit at the same moment:
+- Orchestrator assigns a random offset per agent (e.g., 5–45 minutes into the session)
+- react-specialist completes subtask and commits first
+- 15 minutes later, backend-developer commits
+- 20 minutes later, devops-engineer commits
+- This makes the Git log look like real developers working at their own pace
+
+Implementation: github-ops-manager uses `GIT_AUTHOR_DATE` and `GIT_COMMITTER_DATE` env vars to set realistic timestamps for each agent's commits within the day. Times are randomized but ordered logically (morning → afternoon → evening, with lunch gap).
+
+### 7-Day Sprint Schedule
+
+```
+Monday:    Sprint Planning Meeting — stories decomposed into subtasks
+Tuesday:   Day 1 — standup → agents do subtasks → commit after each → session ends
+Wednesday: Day 2 — standup → agents pick up next subtasks → commit → session ends
+Thursday:  Day 3 — standup → continue subtasks → commit → session ends
+Friday:    Day 4 — standup → continue subtasks → commit → session ends
+Saturday:  Day 5 — standup → continue subtasks → commit → session ends
+Sunday:    Day 6 — standup → final subtasks + bug fixes → Sprint Integration → Review → Retro
+```
+
 ### Sprint Execution (Development Work)
 
 **If `execution_mode: "subagent"` (default):**
 
-1. task-distributor assigns stories based on sprint planning commitments
+1. task-distributor assigns stories (with subtask breakdown) based on sprint planning commitments
 2. multi-agent-coordinator manages parallel execution (max 4 concurrent)
-3. Stories with no dependencies run in parallel
-4. Stories with dependencies run sequentially after blockers complete
-5. Each agent:
-   - Reads their story requirements + architecture docs + **their coaching profile** (if exists from prior sprints)
-   - Writes code to the project source tree
-   - Creates basic tests
-   - Documents in agent-log.md: files created, decisions made with reasoning, tradeoffs, tech debt
-6. After each wave, orchestrator runs a standup and updates standups.md
-7. After each story completion, github-ops-manager:
-   - Creates conventional commit via `git-commit` skill (e.g., `feat(auth): implement OAuth2 login flow`)
-   - Updates the corresponding GitHub issue status via `github-issues` skill
+3. Stories with no dependencies run in parallel; stories with dependencies wait
+4. **Day-by-day execution (Day 1–6, Tuesday–Sunday):**
+   a. Morning standup — sprint-ceremony-manager tracks subtask progress (done/total)
+   b. Session-based subtask execution — one subtask per agent per session:
+      - Agent reads story requirements + architecture docs + coaching profile
+      - Agent completes ONE subtask → writes code/tests → documents in agent-log.md
+      - github-ops-manager commits the subtask (staggered timestamp per agent)
+      - Session ends after all agents commit their subtask
+      - 1–2 hour gap before next session
+   c. 5–12 sessions per day (randomized daily) = 5–12 subtask commits per agent per day
+   d. End-of-day: each agent logs subtasks completed, story completion %, carryover
+5. After each subtask commit, github-ops-manager:
+   - Creates conventional commit via `git-commit` skill (e.g., `feat(auth): add login form validation`)
    - Links commit to issue with `Refs #N` in commit message
+   - Updates issue progress comment (subtasks done/total)
+6. Update `session_progress` in config.json after each session
 
 **If `execution_mode: "agent-teams"`:**
 
 1. **Team Lead creates tasks** — one TaskCreate per sprint story with full metadata:
    - Subject: `"Story S-N-XX: [title]"`
-   - Description includes: requirements, agent_type, story points, priority, required reading list, coaching context, output directory
+   - Description includes: requirements, subtask breakdown, agent_type, story points, priority, required reading list, coaching context, output directory
    - Dependencies set via TaskUpdate addBlockedBy (stories depending on others cannot be claimed)
-2. **Teammates self-assign** — each dev Teammate calls TaskList, finds matching unclaimed tasks (matching their agent_type), claims highest-priority via TaskUpdate, executes, marks complete. Then picks next available task.
-3. **Peer coordination** — Teammates message each other directly for cross-story dependencies instead of routing through orchestrator
-4. **Real-time standups** — sprint-ceremony-manager Teammate creates standup tasks between waves; dev Teammates post status via messaging; transcript compiled from real messages
-5. **github-ops-manager Teammate** — picks up commit/PR tasks from shared task list as stories complete
-6. multi-agent-coordinator and task-distributor are **not spawned** — Agent Teams replaces their coordination role
-7. **Fallback:** If TaskCreate/TaskUpdate fails mid-sprint → collect completed task results → switch remaining stories to subagent spawning → increment `agent_teams.fallback_count` in config.json
+2. **Teammates self-assign** — each dev Teammate claims highest-priority unblocked task matching their agent_type
+3. **Session-based execution** — same day/session model as subagent mode:
+   - Each Teammate completes one subtask per session → commits → session ends
+   - 1–2 hour gap → next session → next subtask
+   - 5–12 subtask sessions per day per agent (varies randomly)
+4. **Peer coordination** — Teammates message each other directly for cross-story dependencies
+5. **Real-time standups** — sprint-ceremony-manager Teammate compiles subtask progress from task status updates
+6. **github-ops-manager Teammate** — picks up subtask commit tasks with staggered timestamps
+7. multi-agent-coordinator and task-distributor are **not spawned** — Agent Teams replaces their coordination role
+8. **Fallback:** If TaskCreate/TaskUpdate fails mid-sprint → collect completed task results → switch remaining stories to subagent spawning → increment `agent_teams.fallback_count` in config.json
 
-Both modes produce identical artifacts at identical paths. See `references/phase-definitions.md` for full Agent Teams variant details.
+Both modes follow the same 7-day schedule, session-based execution, and staggered commit protocol. Both produce identical artifacts at identical paths. See `references/phase-definitions.md` for full details.
+
+### Research Phase Commit Protocol
+
+Research artifacts are committed individually, not as a batch:
+- After each research agent produces its artifact, github-ops-manager commits it:
+  - `research: add trend scan results` (trend-analyst)
+  - `research: add market analysis` (market-researcher)
+  - `research: add competitive landscape` (competitive-analyst)
+  - `research: add project selection report` (research-analyst)
+- Each research commit is a separate session with a random 1–2 hour rest between commits
+- Use `GIT_AUTHOR_DATE`/`GIT_COMMITTER_DATE` for realistic timestamps
+- This makes the research phase look like a multi-day effort, not a single burst
 
 ### Sprint Integration
 1. After all stories complete, verify code compiles and basic tests pass
@@ -322,7 +419,7 @@ Both modes produce identical artifacts at identical paths. See `references/phase
    - Return the Gist URL to the orchestrator for user reference
 7. Transition to TESTING phase
 
-### Friday: Sprint Review Meeting
+### Sunday PM: Sprint Review Meeting
 
 **Participants:** scrum-master (facilitator), product-manager, all agents who worked this sprint, simulated user personas
 **Output:** `.pdlc/sprints/sprint-N/meetings/sprint-review.md`
@@ -344,7 +441,7 @@ Both modes produce identical artifacts at identical paths. See `references/phase
    - If Remotion skill not available: skip video, rely on written demo notes in sprint-review.md
 5. **Sprint metrics** presented: stories completed, velocity, test pass rate, confidence score
 
-### Friday: Sprint Retrospective Meeting
+### Sunday PM: Sprint Retrospective Meeting
 
 **Participants:** scrum-master (facilitator), ALL agents who participated in the sprint
 **Output:** `.pdlc/sprints/sprint-N/meetings/sprint-retro.md`
