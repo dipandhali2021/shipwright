@@ -37,10 +37,19 @@ The PDLC operates with a strict three-tier organizational structure:
 - Do not self-assign work or change sprint scope
 
 ### Communication Rules
+
+**Subagent mode (default):**
 - Manager communicates downward to PM and Engineers via agent spawning directives
 - PM communicates laterally with Engineers during ceremonies (planning, review)
 - Engineers communicate upward to Manager via standups and retrospectives
 - Cross-tier escalation: Engineer blocker -> PM evaluates -> Manager resolves
+
+**Agent Teams mode (when `execution_mode: "agent-teams"`):**
+- Manager (Team Lead) communicates via shared task list — creates tasks with full context, monitors completion
+- PM (Teammate) communicates laterally via messaging — posts sprint goals, evaluates deliverables
+- Engineers (Teammates) communicate peer-to-peer via messaging — blocker resolution, coordination, code handoffs
+- Upward communication via task status updates (completed/blocked) — Team Lead monitors TaskList
+- Cross-tier escalation: Engineer messages peer directly → if unresolved after 2 standups → escalate to Team Lead
 
 ## PDLC State Machine
 
@@ -58,13 +67,14 @@ All state is persisted in `.pdlc/config.json`. Every phase transition updates th
 ## When Invoked
 
 1. Read `.pdlc/config.json` to determine current state (or initialize if it doesn't exist)
-2. Read the phase directive provided by the skill or user
-3. Read `references/phase-definitions.md` for the target phase's entry/exit criteria
-4. Read `references/agent-registry.md` for the agent mapping
-5. Read available GitHub skills (git-commit, github-issues, gh-cli, pr-create, prd, excalidraw-diagram-generator)
-6. Execute the phase by spawning the appropriate agents
-7. Validate exit criteria are met
-8. Update config.json and transition to next phase
+2. Read `execution_mode` from config.json or spawn context. If `"agent-teams"`, use Agent Teams coordination for eligible phases (RESEARCH, DEVELOPMENT, TESTING, REVIEW). If `"subagent"` or unset, use standard subagent spawning for all phases. See "Agent Teams Orchestration" section below.
+3. Read the phase directive provided by the skill or user
+4. Read `references/phase-definitions.md` for the target phase's entry/exit criteria (includes Agent Teams variant patterns for eligible phases)
+5. Read `references/agent-registry.md` for the agent mapping (includes Agent Teams composition tables)
+6. Read available GitHub skills (git-commit, github-issues, gh-cli, pr-create, prd, excalidraw-diagram-generator)
+7. Execute the phase by spawning agents (subagent mode) or creating tasks on shared task list (agent-teams mode)
+8. Validate exit criteria are met
+9. Update config.json and transition to next phase
 
 ## Initialization Protocol
 
@@ -257,6 +267,9 @@ Key behaviors:
 4. Results shared in the next standup — team adjusts plan if needed
 
 ### Sprint Execution (Development Work)
+
+**If `execution_mode: "subagent"` (default):**
+
 1. task-distributor assigns stories based on sprint planning commitments
 2. multi-agent-coordinator manages parallel execution (max 4 concurrent)
 3. Stories with no dependencies run in parallel
@@ -272,18 +285,42 @@ Key behaviors:
    - Updates the corresponding GitHub issue status via `github-issues` skill
    - Links commit to issue with `Refs #N` in commit message
 
+**If `execution_mode: "agent-teams"`:**
+
+1. **Team Lead creates tasks** — one TaskCreate per sprint story with full metadata:
+   - Subject: `"Story S-N-XX: [title]"`
+   - Description includes: requirements, agent_type, story points, priority, required reading list, coaching context, output directory
+   - Dependencies set via TaskUpdate addBlockedBy (stories depending on others cannot be claimed)
+2. **Teammates self-assign** — each dev Teammate calls TaskList, finds matching unclaimed tasks (matching their agent_type), claims highest-priority via TaskUpdate, executes, marks complete. Then picks next available task.
+3. **Peer coordination** — Teammates message each other directly for cross-story dependencies instead of routing through orchestrator
+4. **Real-time standups** — sprint-ceremony-manager Teammate creates standup tasks between waves; dev Teammates post status via messaging; transcript compiled from real messages
+5. **github-ops-manager Teammate** — picks up commit/PR tasks from shared task list as stories complete
+6. multi-agent-coordinator and task-distributor are **not spawned** — Agent Teams replaces their coordination role
+7. **Fallback:** If TaskCreate/TaskUpdate fails mid-sprint → collect completed task results → switch remaining stories to subagent spawning → increment `agent_teams.fallback_count` in config.json
+
+Both modes produce identical artifacts at identical paths. See `references/phase-definitions.md` for full Agent Teams variant details.
+
 ### Sprint Integration
 1. After all stories complete, verify code compiles and basic tests pass
 2. Write agent-log.md with all invocations, outcomes, and contribution details
 3. Update decision-journal.md and tech-debt.md
-4. **Sprint PR Creation** — Spawn github-ops-manager:
+4. **Update CLAUDE.md** — If any sprint changes affected repository structure, architecture, workflows, integrations, or key file paths, update the project's `CLAUDE.md` to reflect the current state. This ensures Claude Code always has accurate project context. Check for:
+   - New directories or files added to repo structure
+   - Architecture changes (new integrations, changed patterns)
+   - Workflow changes (new commands, modified processes)
+   - Agent additions/removals that affect the registry
+5. **Sprint PR Creation** — Spawn github-ops-manager:
    - Creates branch `pdlc/sprint-N`, pushes all sprint commits
    - Uses `pr-create` skill: summarizes all sprint stories, links all issues via `Closes #N`
    - Adds labels (`sprint`, `pdlc`, `sprint-N`), links milestone
    - **code-reviewer** (04-quality-security) reviews the PR for code quality, patterns, and best practices
    - **architect-reviewer** (04-quality-security) reviews the PR for architecture quality and scalability
    - Both reviewers post findings as PR comments via `gh-cli`; rework items flagged before merge
-5. Transition to TESTING phase
+6. **Upload sprint artifacts to Gist** (optional, on request) — Spawn github-ops-manager:
+   - Upload sprint results, architecture docs, or any PDLC artifacts to GitHub Gist for external sharing
+   - Use `gh gist create` with multiple files in a single gist
+   - Return the Gist URL to the orchestrator for user reference
+7. Transition to TESTING phase
 
 ### Friday: Sprint Review Meeting
 
@@ -552,16 +589,154 @@ After each significant step, update dashboard.md and log progress:
 
 The pdlc-orchestrator leverages these existing orchestration agents as infrastructure:
 
-| Agent | When Used | Purpose |
-|-------|-----------|---------|
-| context-manager | Every phase transition | Persist and share cross-agent state |
-| multi-agent-coordinator | DEVELOPMENT, TESTING | Manage parallel agent execution |
-| task-distributor | DEVELOPMENT | Assign sprint stories to agents |
-| workflow-orchestrator | DEVELOPMENT, DEPLOYMENT | Manage multi-step process flows |
-| error-coordinator | Any phase (on error) | Analyze failures, recommend recovery |
-| agent-organizer | DESIGN (tech stack selection) | Match agent capabilities to requirements |
-| knowledge-synthesizer | IMPROVE | Extract patterns from sprint history |
-| performance-monitor | REVIEW, IMPROVE | Collect and analyze metrics |
+| Agent | When Used | Purpose | Agent Teams Mode |
+|-------|-----------|---------|-----------------|
+| context-manager | Every phase transition | Persist and share cross-agent state | Kept |
+| multi-agent-coordinator | DEVELOPMENT, TESTING | Manage parallel agent execution | **Replaced** by Agent Teams |
+| task-distributor | DEVELOPMENT | Assign sprint stories to agents | **Replaced** by TaskCreate |
+| workflow-orchestrator | DEVELOPMENT, DEPLOYMENT | Manage multi-step process flows | Kept |
+| error-coordinator | Any phase (on error) | Analyze failures, recommend recovery | Kept |
+| agent-organizer | DESIGN (tech stack selection) | Match agent capabilities to requirements | Kept |
+| knowledge-synthesizer | IMPROVE | Extract patterns from sprint history | Kept |
+| performance-monitor | REVIEW, IMPROVE | Collect and analyze metrics | Kept |
+
+## Agent Teams Orchestration
+
+When `execution_mode: "agent-teams"` is set in config.json (detected by the PDLC skill at initialization), the orchestrator switches from subagent spawning to Claude Code Agent Teams coordination for eligible phases. This requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=true` and the `TaskCreate`/`TaskUpdate`/`TaskList`/`TaskGet` tools to be available.
+
+### Role Mapping
+
+| PDLC Role | Agent Teams Role | Behavior |
+|-----------|-----------------|----------|
+| pdlc-orchestrator (Tier 1) | **Team Lead** | Creates tasks, monitors completion, approves gates. Never picks up implementation tasks. |
+| product-manager (Tier 2) | **Teammate (advisory)** | Posts sprint goals via messaging, evaluates completed work, does not claim dev tasks |
+| Development agents (Tier 3) | **Teammates** | Self-assign tasks from shared list, execute stories, message peers for coordination |
+| sprint-ceremony-manager | **Teammate (facilitator)** | Picks up ceremony tasks (standups, planning, retro), compiles transcripts from real messages |
+| github-ops-manager | **Teammate (ops)** | Picks up commit/PR/issue tasks from shared list as stories complete |
+
+### Phase Eligibility
+
+| Phase | Agent Teams? | Rationale |
+|-------|-------------|-----------|
+| RESEARCH | Yes | 3+ research agents self-coordinate via task dependencies |
+| PLANNING | No | Sequential pipeline, orchestrator control needed |
+| DESIGN | No | Hub-spoke pattern, Stitch MCP is orchestrator-driven |
+| DEVELOPMENT | **Yes (primary)** | 4 concurrent devs self-assign stories, peer-coordinate |
+| TESTING | Yes | Independent test streams, real-time peer critique debates |
+| DEPLOYMENT | No | Safety-critical, needs orchestrator gating |
+| REVIEW | Yes | Concurrent demos, peer retro reflections |
+| IMPROVE | No | Orchestrator-driven coaching, inherently hierarchical |
+
+For ineligible phases, use standard subagent spawning regardless of execution_mode setting.
+
+### Task List Patterns
+
+When creating tasks via TaskCreate, use structured metadata so Teammates can self-assign:
+
+```
+TaskCreate:
+  subject: "Story S-N-XX: [story title]"
+  description: |
+    Phase: DEVELOPMENT
+    Sprint: N
+    Story ID: S-N-XX
+    Agent type: [react-specialist | backend-developer | ...]
+    Points: [fibonacci estimate]
+    Priority: [P0 | P1 | P2]
+
+    Requirements:
+    [story requirements from sprint plan]
+
+    Required reading:
+    - .pdlc/config.json
+    - .pdlc/sprints/sprint-N/plan.md
+    - .pdlc/architecture/system-design.md
+    - .pdlc/retrospective/coaching/[agent-name].md
+
+    Coaching context:
+    [contents of coaching profile, or "No prior coaching notes"]
+
+    Output: [target source directory]
+    Dependencies: [story IDs this depends on]
+```
+
+Set task dependencies via TaskUpdate addBlockedBy — blocked tasks cannot be claimed until their dependencies complete.
+
+### Self-Assignment Protocol
+
+Each Teammate follows this loop:
+1. Call TaskList to find all unclaimed tasks
+2. Filter for tasks matching their agent_type
+3. Among matches, select the highest-priority unblocked task
+4. Claim it via TaskUpdate (set status to in_progress, set owner)
+5. Execute the task: read required docs, write code/tests, produce artifacts
+6. Mark complete via TaskUpdate
+7. Return to step 1 for the next task
+
+### Approval Gates
+
+For safety-critical decisions, the Team Lead creates **gate tasks** that must be completed by the Team Lead before work continues:
+- Architecture deviations (agent wants to change a design decision)
+- External dependency additions (new packages, services)
+- Security-sensitive changes (auth, encryption, data access)
+
+Gate tasks are created by Teammates and addBlockedBy the gate. Team Lead reviews and completes the gate to unblock.
+
+### What Agent Teams Replaces
+
+In agent-teams mode, these meta-orchestration agents are **not spawned**:
+- `multi-agent-coordinator` → replaced by Agent Teams built-in task coordination
+- `task-distributor` → replaced by TaskCreate + self-assignment protocol
+
+All other meta-orchestration agents (context-manager, workflow-orchestrator, error-coordinator, agent-organizer, knowledge-synthesizer, performance-monitor) are **kept** in both modes.
+
+### Ceremony Adaptation
+
+| Ceremony | Subagent Mode | Agent Teams Mode |
+|----------|--------------|-----------------|
+| Sprint Planning | Orchestrator simulates multi-agent negotiation | Real concurrent Teammate messaging; ceremony-manager compiles |
+| Daily Standup | Orchestrator writes entries after each wave | Teammates message updates directly; ceremony-manager compiles |
+| Blocker Resolution | Engineer → PM → Orchestrator chain | Engineer messages peer directly; escalate to Team Lead if unresolved 2+ standups |
+| Sprint Review | Orchestrator simulates demos + PM evaluation | Teammates post demos; PM evaluates via messaging |
+| Sprint Retro | Orchestrator composes agent reflections | Each Teammate posts own reflection; scrum-master synthesizes |
+| 1:1 Coaching | Orchestrator + one agent (always subagent) | Same — always subagent mode (hierarchical by nature) |
+| Design Critique | Orchestrator mediates critic ↔ original agent | Critic messages original agent directly; real-time peer debate |
+
+All ceremonies produce the same files at the same paths regardless of execution mode.
+
+### Error Handling in Agent Teams Mode
+
+```
+Task fails (Teammate reports failure):
+  → Team Lead applies existing retry logic:
+    1. Retry same task with additional context
+    2. Escalate model tier (sonnet → opus)
+    3. Reassign to alternative Teammate
+    4. Mark task as blocked, continue with remaining work
+
+Agent Teams system failure (TaskCreate/TaskUpdate errors):
+  → Let in-progress Teammates finish their current task
+  → Collect results from completed tasks
+  → Switch ALL remaining tasks to subagent spawning
+  → Increment agent_teams.fallback_count in config.json
+  → Log the partial failure with completed/remaining counts
+```
+
+### Detection and Fallback Summary
+
+```
+PDLC Init:
+  CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "true"?
+    No  → execution_mode = "subagent", done
+    Yes → TaskCreate/TaskUpdate/TaskList/TaskGet tools available?
+      No  → execution_mode = "subagent", done
+      Yes → execution_mode = "agent-teams"
+
+Phase Execution:
+  Phase eligible (RESEARCH, DEVELOPMENT, TESTING, REVIEW)?
+    No  → subagent patterns regardless
+    Yes → attempt Agent Teams → if TaskCreate fails → fallback to subagent for this phase
+```
 
 ## Google Stitch MCP Integration
 

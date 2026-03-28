@@ -128,6 +128,31 @@ Based on the parsed command:
    - IMPROVE → continue improvement, then start next sprint
    - COMPLETE → inform user the project is done, offer to start a new one
 
+### Step 2.5: Detect Execution Mode
+
+Before spawning the orchestrator, detect whether Claude Code Agent Teams is available:
+
+1. Check if the environment variable `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` is set to `true`
+2. Check if Agent Teams tools are available in the current session: `TaskCreate`, `TaskUpdate`, `TaskList`, `TaskGet`
+3. If **both** conditions are true → set `execution_mode: "agent-teams"` in config.json
+4. If **either** condition is false → set `execution_mode: "subagent"` in config.json (default)
+
+Update the `agent_teams` object in config.json with detection results:
+```json
+{
+  "execution_mode": "agent-teams",
+  "agent_teams": {
+    "available": true,
+    "env_var_set": true,
+    "tools_available": true,
+    "phases_using_teams": ["RESEARCH", "DEVELOPMENT", "TESTING", "REVIEW"],
+    "fallback_count": 0
+  }
+}
+```
+
+This detection mirrors the Stitch MCP setup check pattern — detect at runtime, use if available, degrade gracefully if not.
+
 ### Step 3: Spawn Orchestrator
 
 When spawning the pdlc-orchestrator, first read `agents/pdlc-orchestrator.md` for its full instructions. Then spawn a subagent using those instructions as its system prompt, along with this context:
@@ -140,6 +165,11 @@ Project state:
 - Current phase: [phase]
 - Current sprint: [N of M]
 - Tech stack: [from config.json if set]
+- Execution mode: [agent-teams | subagent]
+
+Execution mode notes:
+- agent-teams: Use Claude Code Agent Teams (shared task list + teammate messaging) for eligible phases (RESEARCH, DEVELOPMENT, TESTING, REVIEW). The orchestrator acts as Team Lead, development agents act as Teammates.
+- subagent: Use traditional subagent spawning for all phases. This is the default when Agent Teams is not available.
 
 Reference files (read as needed):
 - Agent registry: .claude/skills/pdlc/references/agent-registry.md
@@ -214,6 +244,51 @@ The orchestrator automatically uses these tools when a project has a frontend co
 - **DESIGN phase:** `enhance-prompt` → `stitch-design` → `design-md` for screen designs and design systems
 - **DEVELOPMENT phase:** `stitch-loop` for scaffolding, `react-components` for component code, `shadcn-ui` for UI library integration
 - **REVIEW phase:** `remotion` for generating sprint demo videos
+
+## Claude Code Agent Teams Integration
+
+The PDLC can leverage Claude Code's experimental Agent Teams feature for true parallel execution. Instead of the orchestrator serially spawning subagents, Agent Teams enables multiple Claude Code instances to work as a coordinated team with a shared task list and direct peer messaging.
+
+### Agent Teams Setup Check
+
+Agent Teams requires two conditions (detected automatically in Step 2.5):
+
+1. **Environment variable:** `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=true`
+2. **Tools available:** `TaskCreate`, `TaskUpdate`, `TaskList`, `TaskGet` in the current session
+
+If Agent Teams is NOT available, inform the user:
+
+```
+Agent Teams is not enabled. The PDLC will use standard subagent orchestration.
+
+To enable Agent Teams for true parallel agent execution:
+  export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=true
+
+Then restart Claude Code. Agent Teams enables:
+- Multiple Claude instances working in parallel as Teammates
+- Shared task list for self-coordinating sprint stories
+- Direct peer-to-peer messaging for blocker resolution
+- Real-time ceremony participation (standups, retros)
+```
+
+### How Agent Teams Enhances PDLC
+
+When available, Agent Teams is used for phases with high parallelism potential:
+
+| Phase | Agent Teams? | Why |
+|-------|-------------|-----|
+| RESEARCH | Yes | 3+ research agents self-coordinate wave-based scanning |
+| PLANNING | No | Sequential pipeline, orchestrator control needed |
+| DESIGN | No | Hub-spoke pattern, Stitch MCP is orchestrator-driven |
+| DEVELOPMENT | **Yes (primary)** | 4 concurrent devs self-assign stories, peer-coordinate |
+| TESTING | Yes | Independent test streams, real-time critique debates |
+| DEPLOYMENT | No | Safety-critical, needs orchestrator gating |
+| REVIEW | Yes | Concurrent demos, peer retro reflections |
+| IMPROVE | No | Orchestrator-driven coaching, inherently hierarchical |
+
+The orchestrator acts as **Team Lead** (creates tasks, monitors, approves gates) while development agents act as **Teammates** (self-assign tasks, execute, message peers). All ceremonies produce the same artifacts at the same paths regardless of execution mode.
+
+When Agent Teams is not available, the PDLC falls back to the subagent approach with zero behavioral change. See `agents/pdlc-orchestrator.md` for full dual-mode orchestration details.
 
 ## Reference Files
 

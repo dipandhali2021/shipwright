@@ -92,6 +92,27 @@ Each candidate project is scored on 4 dimensions (0-25 each, total 0-100):
 
 ### Max Retries: 3
 
+### Agent Teams Variant (RESEARCH)
+
+When `execution_mode: "agent-teams"`, the orchestrator acts as **Team Lead** and creates tasks instead of spawning subagents:
+
+1. **Wave 1 — Team Lead creates 3 parallel tasks via TaskCreate:**
+   - Task: "Scan technology trends" → assigned to trend-analyst Teammate
+   - Task: "Deep-dive emerging technologies" → assigned to search-specialist Teammate
+   - Task: "Assess market dynamics" → assigned to market-researcher Teammate
+   - Teammates self-assign matching tasks and begin work simultaneously
+   - Teammates cross-pollinate findings via direct messaging during execution
+
+2. **Wave 2 — Team Lead creates 2 tasks with dependencies:**
+   - Task: "Analyze competitive landscape" → addBlockedBy wave 1 tasks → competitive-analyst Teammate
+   - Task: "Gather quantitative data" → addBlockedBy wave 1 tasks → data-researcher Teammate
+
+3. **Wave 3 — Team Lead creates synthesis task:**
+   - Task: "Score candidates and recommend top pick" → addBlockedBy wave 2 tasks → research-analyst Teammate
+   - research-analyst reads all wave 1-2 outputs via file system (same artifacts, same paths)
+
+All artifacts are written to identical paths as subagent mode. Entry/exit criteria unchanged.
+
 ---
 
 ## Phase 2: PLANNING
@@ -300,6 +321,7 @@ Each candidate project is scored on 4 dimensions (0-25 each, total 0-100):
 - Decision journal updated if significant decisions were made
 - Tech debt register updated if shortcuts were introduced
 - Spike notes written if exploratory stories existed
+- `CLAUDE.md` updated if sprint changes affected repo structure, architecture, or workflows
 - `config.json` updated: phase transitions to `"TESTING"`
 
 ### Error Handling
@@ -309,6 +331,47 @@ Each candidate project is scored on 4 dimensions (0-25 each, total 0-100):
 - If 0 stories complete: halve next sprint scope, add a diagnostic step
 
 ### Max Retries: 2 per story, 1 per sprint
+
+### Agent Teams Variant (DEVELOPMENT)
+
+When `execution_mode: "agent-teams"`, the DEVELOPMENT phase is the **primary beneficiary** of Agent Teams. The orchestrator (Team Lead) replaces task-distributor and multi-agent-coordinator with the shared task list.
+
+**Sprint Planning:** Same ceremony structure, but sprint-ceremony-manager runs as a **Teammate** that picks up the ceremony task. All planning participants communicate via Teammate messaging instead of orchestrator-simulated dialogue.
+
+**Story Execution via Shared Task List:**
+
+1. **Team Lead creates one TaskCreate per sprint story** with structured metadata:
+   ```
+   TaskCreate:
+     subject: "Story S-N-XX: [story title]"
+     description: |
+       Requirements: [from sprint plan]
+       Agent type: [react-specialist | backend-developer | ...]
+       Story points: [N]
+       Priority: [P0 | P1 | P2]
+       Required reading: [list of architecture docs, coaching profile path]
+       Coaching context: [notes from .pdlc/retrospective/coaching/[agent].md]
+       Output directory: [target source path]
+       Dependencies: [list of story IDs this depends on]
+   ```
+
+2. **Dependencies set via TaskUpdate addBlockedBy** — stories with dependencies cannot be claimed until blockers complete.
+
+3. **Teammates self-assign** — each dev Teammate calls TaskList, finds matching unclaimed tasks (matching their agent_type), claims the highest-priority one via TaskUpdate, executes, and marks complete. Then picks up the next available task.
+
+4. **Peer coordination via messaging** — when a Teammate discovers a cross-story dependency or needs input from another agent, they message that Teammate directly instead of escalating through the orchestrator.
+
+5. **Standups become real-time** — sprint-ceremony-manager Teammate creates standup tasks between story waves. Dev Teammates post status updates via messaging. Transcript compiled from real messages into `.pdlc/sprints/sprint-N/meetings/standups.md`.
+
+6. **github-ops-manager Teammate** picks up commit/PR tasks from the shared task list as stories complete.
+
+**Infrastructure setup (sprint 1)** remains orchestrator-driven (subagent mode) since it's sequential prerequisite work.
+
+**Integration:** Team Lead monitors TaskList for completion. When all story tasks are complete, Team Lead verifies integration (same as subagent mode step 4).
+
+**Fallback:** If TaskCreate/TaskUpdate fails mid-sprint, Team Lead collects results from completed tasks and switches remaining stories to subagent spawning. Increment `agent_teams.fallback_count` in config.json.
+
+All artifacts written to identical paths. Entry/exit criteria unchanged.
 
 ---
 
@@ -361,6 +424,33 @@ Each candidate project is scored on 4 dimensions (0-25 each, total 0-100):
 - If code reviewer requests major refactor: add refactoring story to next sprint
 
 ### Max Retries: 2 (fix-verify cycles)
+
+### Agent Teams Variant (TESTING)
+
+When `execution_mode: "agent-teams"`, the orchestrator (Team Lead) creates testing tasks on the shared task list:
+
+1. **Wave 1 — Team Lead creates 3 parallel testing tasks:**
+   - Task: "Execute test plan" → qa-expert Teammate
+   - Task: "Write automated test suites" → test-automator Teammate
+   - Task: "Review all sprint code" → code-reviewer Teammate
+   - Teammates self-assign and execute in parallel
+
+2. **Wave 1.5 — Design critique as peer debate:**
+   - Team Lead creates critique tasks → code-reviewer and architect-reviewer Teammates
+   - **Key improvement over subagent mode:** critic Teammates **message the original dev Teammate directly** for real-time debate instead of orchestrator-mediated back-and-forth
+   - The dev Teammate can defend decisions or accept and fix — producing richer, more authentic engineering debates
+   - Critique transcripts compiled from real message exchanges
+
+3. **Wave 2 — Conditional specialized testing tasks (addBlockedBy wave 1):**
+   - Team Lead creates tasks for security-auditor, performance-engineer, accessibility-tester as needed
+   - Teammates self-assign matching tasks
+
+4. **Wave 3 — Reactive bug fix tasks:**
+   - Testing Teammates create new bug fix tasks directly via TaskCreate when they find issues
+   - debugger/error-detective Teammates pick up bug fix tasks
+   - This is a natural advantage of Agent Teams — Teammates can create work for each other without routing through the orchestrator
+
+All artifacts written to identical paths. Entry/exit criteria unchanged.
 
 ---
 
@@ -484,6 +574,31 @@ Each candidate project is scored on 4 dimensions (0-25 each, total 0-100):
 
 ### Max Retries: 1
 
+### Agent Teams Variant (REVIEW)
+
+When `execution_mode: "agent-teams"`, review ceremonies use real concurrent Teammate communication:
+
+1. **Sprint Review Meeting:**
+   - Team Lead creates a "Sprint Review" task → sprint-ceremony-manager Teammate facilitates
+   - Each dev Teammate **posts their demo via messaging** — what was built, decisions, approach
+   - product-manager Teammate **evaluates concurrently** via messaging — approved/needs rework per story
+   - performance-monitor and architect-reviewer run as parallel Teammates collecting metrics and assessing architecture
+   - sprint-ceremony-manager compiles all real message exchanges into `.pdlc/sprints/sprint-N/meetings/sprint-review.md`
+   - **Key improvement:** Demos and evaluations happen concurrently instead of sequential orchestrator simulation
+
+2. **Sprint Retrospective Meeting:**
+   - Each Teammate **posts their own reflection concurrently** via messaging:
+     - What went well, what didn't, suggestions
+   - scrum-master Teammate synthesizes patterns and action items from real peer messages
+   - **Key improvement:** Reflections are authentic and concurrent — agents can react to each other's observations in real-time, producing richer retro insights
+   - External skill integration same as subagent mode
+
+3. **Sprint confidence scoring + results compilation:** Same as subagent mode — these are orchestrator (Team Lead) tasks that don't benefit from parallelism.
+
+4. **Roadmap update:** Same as subagent mode.
+
+All artifacts written to identical paths. Entry/exit criteria unchanged.
+
 ---
 
 ## Phase 8: IMPROVE
@@ -538,6 +653,12 @@ Each candidate project is scored on 4 dimensions (0-25 each, total 0-100):
      - `.pdlc/retrospective/recommendations.md` (overwrite with latest)
      - `.pdlc/retrospective/tech-debt.md` (update debt register)
 
+6. **Update CLAUDE.md (step 6):**
+   - Review all changes made during the sprint cycle (DEVELOPMENT through IMPROVE)
+   - If any changes affected repo structure, architecture, workflows, integrations, or key file paths, update `CLAUDE.md`
+   - This ensures Claude Code always has accurate context about the project for future sessions
+   - Check for: new directories/files, architecture changes, workflow changes, agent additions/removals, new integrations
+
 ### Transition Decision
 After IMPROVE, the orchestrator decides:
 - **If `current_sprint < total_planned_sprints`:** increment `current_sprint`, set `current_phase: "DEVELOPMENT"`, continue to next sprint
@@ -548,6 +669,7 @@ After IMPROVE, the orchestrator decides:
 - Self-improvement log updated
 - Agent performance scores updated
 - Recommendations document written
+- `CLAUDE.md` updated if sprint cycle changed repo structure, architecture, or workflows
 - `config.json` updated with next phase decision
 
 ### Error Handling

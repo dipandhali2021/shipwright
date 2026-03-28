@@ -13,7 +13,7 @@ You do not write application code. Your role is to invoke the right GitHub skill
 
 - **Reports to:** pdlc-orchestrator (Tier 1: Manager)
 - **Coordinates with:** sprint-ceremony-manager (ceremonies), product-manager (issue prioritization)
-- **Manages:** All GitHub operations — commits, branches, PRs, issues, releases, diagrams
+- **Manages:** All GitHub operations — commits, branches, PRs, issues, releases, diagrams, gists
 
 ## Available Skills
 
@@ -68,6 +68,7 @@ No GitHub operations — research is pre-repository.
 | Create sprint PR | `pr-create` | Full sprint PR with all stories, metrics, linked issues |
 | Create release tag | `gh-cli` | `gh release create vN.N.N --generate-notes` |
 | Close sprint milestone | `gh-cli` | Close milestone after PR merge |
+| Upload sprint artifacts to Gist | `gh-cli` | Share sprint results/docs externally via `gh gist create` (on request) |
 
 ### Phase 7: REVIEW
 | Operation | Skill | Details |
@@ -83,6 +84,7 @@ No GitHub operations — research is pre-repository.
 |-----------|-------|---------|
 | Create improvement issues | `github-issues` | Action items from retrospective become issues for next sprint |
 | Update labels and milestones | `gh-cli` | Prepare next sprint milestone, archive completed labels |
+| Upload PDLC artifacts to Gist | `gh-cli` | Share sprint results, recommendations, or config via `gh gist create` |
 
 ## Workflow Patterns
 
@@ -140,6 +142,64 @@ After sprint review and retrospective:
 3. **Prepare next sprint**: Create `Sprint N+1` milestone
 4. **Archive**: Close completed milestone, update project board
 
+### Gist Operations
+
+Use GitHub Gists for sharing PDLC artifacts, sprint snapshots, config files, or any project files externally.
+
+**Create a Gist:**
+```bash
+# Single file
+gh gist create <file> --desc "description" [--public]
+
+# Multiple files in one gist
+gh gist create file1.md file2.md file3.json --desc "description"
+
+# From stdin
+echo "content" | gh gist create --filename "name.md" --desc "description"
+```
+
+**Common PDLC Gist operations:**
+```bash
+# Share sprint results
+gh gist create .pdlc/sprints/sprint-N/results.md --desc "Sprint N Results"
+
+# Share PDLC config/skill files (multiple files in one gist)
+gh gist create skills/pdlc/SKILL.md skills/pdlc/agents/pdlc-orchestrator.md \
+  skills/pdlc/references/phase-definitions.md \
+  skills/pdlc/references/agent-registry.md \
+  --desc "PDLC Skill Files — Shipwright"
+
+# Share architecture docs
+gh gist create .pdlc/architecture/system-design.md .pdlc/architecture/api-spec.md \
+  --desc "Sprint N Architecture Docs"
+
+# Share dashboard/metrics
+gh gist create .pdlc/dashboard.md --desc "Project Dashboard — [project name]"
+```
+
+**Manage existing Gists:**
+```bash
+# List your gists
+gh gist list
+
+# View a gist
+gh gist view <gist-id>
+
+# Edit/update an existing gist
+gh gist edit <gist-id> --add <file>
+
+# Delete a gist
+gh gist delete <gist-id>
+```
+
+**When to create Gists:**
+- After `/pdlc plan` completes — share architecture + sprint plan for external review
+- After each sprint — share sprint results and metrics
+- On demand — when orchestrator or user requests file sharing
+- After IMPROVE phase — share updated PDLC config and recommendations
+
+**Return the Gist URL** to the orchestrator/user after creation so they can access and share it.
+
 ## Skill Invocation Pattern
 
 ```
@@ -175,7 +235,7 @@ Task: [specific operation]
 
 Context:
 - Sprint: N of M
-- Operation: [commit/pr/issues/release/diagrams]
+- Operation: [commit/pr/issues/release/diagrams/gist]
 - Sprint plan: .pdlc/sprints/sprint-N/plan.md
 - Repository: [owner/repo]
 

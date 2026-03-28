@@ -65,6 +65,9 @@ Choose technology stack, design system architecture, create ADRs.
 | ui-designer | 01-core-development | UI/UX architecture, design system, component hierarchy | sonnet | Conditional | 2 (if project has frontend) | Engineer (Tier 3) |
 | graphql-architect | 01-core-development | GraphQL schema and federation design | opus | Conditional | 2 (if GraphQL chosen) | Engineer (Tier 3) |
 | network-engineer | 03-infrastructure | Network topology and security groups | sonnet | Conditional | 2 (if complex networking) | Engineer (Tier 3) |
+| postgres-pro | 05-data-ai | PostgreSQL database design, indexing, and optimization | sonnet | Conditional | 2 (if PostgreSQL chosen) | Engineer (Tier 3) |
+| sql-pro | 02-language-specialists | Complex SQL query design and database schema optimization | sonnet | Conditional | 2 (if complex SQL needed) | Engineer (Tier 3) |
+| prompt-engineer | 05-data-ai | AI/LLM prompt design, optimization, and evaluation | sonnet | Conditional | 2 (if AI/LLM project) | Engineer (Tier 3) |
 
 **Google Stitch MCP Tools (for projects with UI/UX):**
 
@@ -92,6 +95,9 @@ Build the product in sprint cycles. Agent selection depends on tech stack chosen
 |-------|----------|------|-------|----------|-----------|
 | scrum-master | 08-business-product | Sprint planning, story decomposition, velocity tracking | haiku | Primary | Engineer (Tier 3) |
 | documentation-engineer | 06-developer-experience | Code documentation, README updates | haiku | Supporting | Engineer (Tier 3) |
+| api-documenter | 07-specialized-domains | API documentation (OpenAPI/Swagger specs) | haiku | Supporting | Engineer (Tier 3) |
+| tooling-engineer | 06-developer-experience | Developer tooling and build pipeline optimization | haiku | Supporting | Engineer (Tier 3) |
+| legacy-modernizer | 06-developer-experience | Legacy codebase modernization and migration | sonnet | Conditional (legacy codebases) | Engineer (Tier 3) |
 
 **Sprint 1 only (infrastructure setup):**
 
@@ -139,6 +145,10 @@ Validate all sprint deliverables.
 | error-detective | 04-quality-security | Root cause analysis for complex bugs | sonnet | Reactive | 3 (only if complex issues) | Engineer (Tier 3) |
 | penetration-tester | 04-quality-security | Ethical hacking, exploit testing | sonnet | Conditional | 2 (if security-critical) | Engineer (Tier 3) |
 | compliance-auditor | 04-quality-security | Regulatory compliance check | sonnet | Conditional | 2 (if regulated domain) | Engineer (Tier 3) |
+| chaos-engineer | 04-quality-security | Chaos engineering and resilience testing | sonnet | Conditional | 2 (if distributed system) | Engineer (Tier 3) |
+| database-optimizer | 05-data-ai | Database performance tuning and query optimization | sonnet | Conditional | 2 (if DB performance issues) | Engineer (Tier 3) |
+| ad-security-reviewer | 04-quality-security | Active Directory security and GPO audit | sonnet | Conditional | 2 (if Windows/AD environment) | Engineer (Tier 3) |
+| powershell-security-hardening | 04-quality-security | PowerShell security hardening and compliance | sonnet | Conditional | 2 (if Windows/PowerShell) | Engineer (Tier 3) |
 
 **Orchestration pattern:** Parallel fan-out for independent testing (wave 1-2), sequential fix-verify cycles (wave 3).
 
@@ -159,6 +169,12 @@ Package and deploy sprint deliverables.
 | terraform-engineer | 03-infrastructure | Infrastructure provisioning and updates | sonnet | Conditional | 1 (if IaC needed) | Engineer (Tier 3) |
 | sre-engineer | 03-infrastructure | Monitoring setup, SLI/SLO configuration | sonnet | Supporting | 2 (after deployment) | Engineer (Tier 3) |
 | platform-engineer | 03-infrastructure | Developer platform updates | sonnet | Conditional | 2 (if platform changes) | Engineer (Tier 3) |
+| azure-infra-engineer | 03-infrastructure | Azure infrastructure and Az PowerShell automation | sonnet | Conditional | 1 (if Azure target) | Engineer (Tier 3) |
+| terragrunt-expert | 03-infrastructure | Terragrunt orchestration and DRY IaC | sonnet | Conditional | 1 (if Terragrunt used) | Engineer (Tier 3) |
+| windows-infra-admin | 03-infrastructure | Active Directory, DNS, DHCP, GPO automation | sonnet | Conditional | 2 (if Windows infrastructure) | Engineer (Tier 3) |
+| devops-incident-responder | 03-infrastructure | DevOps incident management during deployment | sonnet | Reactive | 3 (only if incidents occur) | Engineer (Tier 3) |
+| incident-responder | 03-infrastructure | System incident response and recovery | sonnet | Reactive | 3 (only if incidents occur) | Engineer (Tier 3) |
+| it-ops-orchestrator | 09-meta-orchestration | IT operations workflow coordination | sonnet | Conditional | 2 (if complex IT ops) | Engineer (Tier 3) |
 
 **Orchestration pattern:** Sequential pipeline. terraform-engineer (if needed) → docker-expert + devops-engineer (parallel) → deployment-engineer → sre-engineer.
 
@@ -177,6 +193,8 @@ Evaluate sprint outcomes and run retrospective.
 | product-manager | 08-business-product | Evaluate delivery against product goals | haiku | Primary | 1 (parallel) | PM (Tier 2) |
 | architect-reviewer | 04-quality-security | Architecture quality assessment | opus | Supporting | 2 (after metrics) | Engineer (Tier 3) |
 | content-marketer | 08-business-product | Assess market-readiness of deliverables | haiku | Conditional | 2 (if release sprint) | Engineer (Tier 3) |
+| customer-success-manager | 08-business-product | Customer satisfaction and success metrics evaluation | haiku | Conditional | 2 (if customer-facing product) | Engineer (Tier 3) |
+| sales-engineer | 08-business-product | Technical demo readiness and sales enablement | haiku | Conditional | 2 (if B2B/sales-driven product) | Engineer (Tier 3) |
 
 **Orchestration pattern:** Parallel assessment (wave 1), sequential synthesis (wave 2).
 
@@ -195,6 +213,7 @@ Learn from past sprints and optimize future execution.
 | error-coordinator | 09-meta-orchestration | Analyze failure patterns and prevention | sonnet | Supporting | 2 (after data collection) | Engineer (Tier 3) |
 | context-manager | 09-meta-orchestration | Update shared project state and context | sonnet | Supporting | 3 (after analysis) | Engineer (Tier 3) |
 | refactoring-specialist | 06-developer-experience | Identify code quality improvements for next sprint | sonnet | Conditional | 2 (if tech debt flagged) | Engineer (Tier 3) |
+| dx-optimizer | 06-developer-experience | Developer experience and workflow optimization | sonnet | Conditional | 2 (if DX issues flagged) | Engineer (Tier 3) |
 
 **Orchestration pattern:** Sequential analysis. knowledge-synthesizer + performance-monitor (parallel) → error-coordinator → context-manager.
 
@@ -208,18 +227,92 @@ These agents are invoked by the pdlc-orchestrator as infrastructure, not as phas
 
 **Note:** The three core PDLC agents (pdlc-orchestrator, sprint-ceremony-manager, github-ops-manager) are bundled with this skill in `agents/`. All other agents in this registry are optional — installed separately via the category plugin system. When an optional agent is not available, the orchestrator falls back per its retry/fallback logic.
 
-| Agent | Role in PDLC | When Invoked |
-|-------|-------------|--------------|
-| context-manager | Shared state persistence, cross-agent context | Every phase transition |
-| multi-agent-coordinator | Parallel agent execution management | Phases 4, 5 (parallel work) |
-| task-distributor | Work allocation and load balancing | Phase 4 (story assignment) |
-| workflow-orchestrator | Complex process flow management | Phase 4, 6 (multi-step workflows) |
-| error-coordinator | Failure detection and recovery | Any phase on error |
-| agent-organizer | Team assembly and capability matching | Phase 3 (selecting dev agents) |
-| performance-monitor | Metrics collection | Phases 7, 8 |
-| knowledge-synthesizer | Learning and improvement | Phase 8 |
-| sprint-ceremony-manager | Sprint ceremony coordination, skill invocation | Phases 4, 7 (all ceremonies) |
-| github-ops-manager | GitHub operations: commits, PRs, issues, releases, PR reviews | Phases 2-8 (all code phases) |
+| Agent | Role in PDLC | When Invoked | Agent Teams Status |
+|-------|-------------|--------------|-------------------|
+| context-manager | Shared state persistence, cross-agent context | Every phase transition | Kept in both modes |
+| multi-agent-coordinator | Parallel agent execution management | Phases 4, 5 (parallel work) | **Replaced** by Agent Teams task coordination in agent-teams mode |
+| task-distributor | Work allocation and load balancing | Phase 4 (story assignment) | **Replaced** by TaskCreate + self-assignment in agent-teams mode |
+| workflow-orchestrator | Complex process flow management | Phase 4, 6 (multi-step workflows) | Kept in both modes |
+| error-coordinator | Failure detection and recovery | Any phase on error | Kept in both modes |
+| agent-organizer | Team assembly and capability matching | Phase 3 (selecting dev agents) | Kept in both modes |
+| performance-monitor | Metrics collection | Phases 7, 8 | Kept in both modes |
+| knowledge-synthesizer | Learning and improvement | Phase 8 | Kept in both modes |
+| sprint-ceremony-manager | Sprint ceremony coordination, skill invocation | Phases 4, 7 (all ceremonies) | Kept — becomes Teammate (facilitator) in agent-teams mode |
+| github-ops-manager | GitHub operations: commits, PRs, issues, releases, PR reviews | Phases 2-8 (all code phases) | Kept — becomes Teammate (ops) in agent-teams mode |
+| it-ops-orchestrator | IT operations workflow coordination | Phase 6 (if complex IT ops) | Kept in both modes |
+| agent-installer | Browse and install agents from repository (utility, not auto-spawned) | Manual invocation only | N/A |
+
+---
+
+## Agent Teams Composition
+
+When `execution_mode: "agent-teams"` is active (Claude Code Agent Teams experimental feature enabled), the orchestrator uses a Team Lead + Teammates model instead of subagent spawning for eligible phases. The orchestrator always acts as **Team Lead**. Ineligible phases always use subagent mode regardless of setting.
+
+### Phase Eligibility
+
+| Phase | Agent Teams? | Rationale |
+|-------|-------------|-----------|
+| RESEARCH | Yes | Research agents self-coordinate wave-based scanning via task dependencies |
+| PLANNING | No | Sequential pipeline, max 2 concurrent, needs orchestrator control |
+| DESIGN | No | Hub-spoke pattern, Stitch MCP is orchestrator-driven |
+| DEVELOPMENT | **Yes (primary)** | 4 concurrent dev Teammates self-assign sprint stories, peer-coordinate |
+| TESTING | Yes | Independent test streams, real-time peer critique debates |
+| DEPLOYMENT | No | Safety-critical sequential steps, needs orchestrator gating |
+| REVIEW | Yes | Concurrent demos, peer retro reflections via messaging |
+| IMPROVE | No | Orchestrator-driven coaching and analysis, inherently hierarchical |
+
+### Team Composition per Phase
+
+**RESEARCH Team (6 potential Teammates):**
+
+| Agent | Teams Role | Task Type |
+|-------|-----------|-----------|
+| trend-analyst | Teammate | Wave 1: trend scanning |
+| search-specialist | Teammate | Wave 1: project search |
+| market-researcher | Teammate | Wave 1: market analysis |
+| competitive-analyst | Teammate | Wave 2: competitive analysis |
+| data-researcher | Teammate | Wave 2: data collection |
+| research-analyst | Teammate (synthesis) | Wave 3: synthesis + selection |
+
+Max concurrent: 3 (wave 1). Teammates cross-pollinate findings via messaging during waves.
+
+**DEVELOPMENT Team (dynamic, based on sprint plan):**
+
+| Agent | Teams Role | Task Type |
+|-------|-----------|-----------|
+| [sprint dev agents] | Teammate | Story execution (self-assign from task list) |
+| sprint-ceremony-manager | Teammate (facilitator) | Standup/ceremony tasks |
+| github-ops-manager | Teammate (ops) | Commit/PR/issue tasks |
+| product-manager | Teammate (advisory) | Sprint goal clarification, story acceptance |
+
+Max concurrent devs: 4. Dev Teammates self-assign stories matching their `agent_type`, highest priority first. Sprint ceremony-manager picks up ceremony tasks between story waves.
+
+**TESTING Team (up to 8 Teammates):**
+
+| Agent | Teams Role | Task Type |
+|-------|-----------|-----------|
+| qa-expert | Teammate | Wave 1: functional testing |
+| test-automator | Teammate | Wave 1: test automation |
+| code-reviewer | Teammate | Wave 1: code quality review |
+| architect-reviewer | Teammate | Wave 1.5: architecture critique (messages original dev directly) |
+| security-auditor | Teammate (conditional) | Wave 2: security testing |
+| performance-engineer | Teammate (conditional) | Wave 2: performance testing |
+| accessibility-tester | Teammate (conditional) | Wave 2: a11y testing (if frontend) |
+| debugger | Teammate (reactive) | Wave 3: bug fixing (created by other Teammates) |
+
+Max concurrent: 4. Wave 1.5 critique loop uses direct Teammate messaging for real-time debate with original developers.
+
+**REVIEW Team (dynamic, includes all sprint participants):**
+
+| Agent | Teams Role | Task Type |
+|-------|-----------|-----------|
+| scrum-master | Teammate (facilitator) | Review + retro facilitation |
+| product-manager | Teammate (evaluator) | Sprint goal evaluation |
+| performance-monitor | Teammate | Metrics collection |
+| [all sprint dev agents] | Teammate | Demo their completed stories |
+| architect-reviewer | Teammate | Architecture evaluation |
+
+Max concurrent: 3. Each dev Teammate posts demo via messaging; PM evaluates concurrently.
 
 ---
 
@@ -309,6 +402,7 @@ The orchestrator reads the project description from Phase 2 outputs and matches 
 **Detection keywords:** iOS, Android, mobile, app store, native
 **Language/framework agents (pick one):**
 - mobile-developer (React Native) — Cross-platform, JS ecosystem
+- expo-react-native-expert — Expo + React Native, managed workflow
 - mobile-app-developer + flutter-expert — Cross-platform, Dart, rich UI
 - swift-expert — iOS native only
 - kotlin-specialist — Android native only
@@ -333,6 +427,7 @@ The orchestrator reads the project description from Phase 2 outputs and matches 
 **Language agents:** python-pro
 **Framework agents (pick based on scope):**
 - data-engineer + ml-engineer — Full ML pipeline
+- data-engineer + machine-learning-engineer — ML systems and model deployment
 - data-scientist + data-analyst — Analysis and insights focus
 - ai-engineer + llm-architect — LLM/AI application
 - nlp-engineer — Text/language processing
@@ -386,6 +481,76 @@ The orchestrator reads the project description from Phase 2 outputs and matches 
 **Language agents:** typescript-pro
 **Supporting:** ui-designer
 **Infra agents:** build-engineer
+
+### .NET Application
+
+**Detection keywords:** .NET, C#, ASP.NET, Blazor, Entity Framework, WPF, MAUI
+**Language agents:**
+- dotnet-core-expert — .NET 8 cross-platform (modern projects)
+- dotnet-framework-4.8-expert — Legacy .NET Framework (enterprise maintenance)
+- csharp-developer — C# language expertise
+
+**Core dev agents:** backend-developer
+**Infra agents:** devops-engineer, docker-expert, azure-infra-engineer
+
+### PHP Application
+
+**Detection keywords:** PHP, Laravel, Symfony, WordPress, Composer
+**Language agents:**
+- php-pro — PHP development
+- laravel-specialist — Laravel 10+ framework
+- symfony-specialist — Symfony 6+/7+/8+ framework
+
+**Core dev agents:** backend-developer, fullstack-developer
+**Infra agents:** devops-engineer, docker-expert
+
+### Ruby on Rails
+
+**Detection keywords:** Ruby, Rails, ActiveRecord, Hotwire, Turbo
+**Language agents:** rails-expert
+**Core dev agents:** fullstack-developer
+**Infra agents:** devops-engineer, docker-expert
+
+### Elixir / Phoenix
+
+**Detection keywords:** Elixir, Phoenix, OTP, LiveView, fault-tolerant
+**Language agents:** elixir-expert
+**Core dev agents:** backend-developer
+**Infra agents:** devops-engineer, docker-expert
+
+### PowerShell / Windows Automation
+
+**Detection keywords:** PowerShell, Windows automation, Active Directory, GPO, Azure AD, WinForms, WPF
+**Language agents:**
+- powershell-7-expert — Cross-platform PowerShell 7+ (modern)
+- powershell-5.1-expert — Windows PowerShell 5.1 (legacy)
+- powershell-module-architect — PowerShell module development
+- powershell-ui-architect — PowerShell UI/TUI (WinForms, WPF)
+
+**Supporting:** windows-infra-admin, ad-security-reviewer, m365-admin
+**Infra agents:** azure-infra-engineer
+
+### Microsoft 365 / Enterprise
+
+**Detection keywords:** Microsoft 365, Exchange Online, Teams, SharePoint, Entra ID, Graph API
+**Core agents:** m365-admin
+**Supporting:** powershell-7-expert, azure-infra-engineer, ad-security-reviewer
+**Infra agents:** windows-infra-admin
+
+### MCP Tool / AI Agent
+
+**Detection keywords:** MCP server, Model Context Protocol, AI tool, Claude tool, agent framework
+**Core agents:** mcp-developer
+**Supporting:** prompt-engineer, llm-architect, ai-engineer
+**Language agents:** typescript-pro OR python-pro
+**Infra agents:** devops-engineer
+
+### Slack Integration
+
+**Detection keywords:** Slack bot, Slack app, @slack/bolt, Slack API, workspace integration
+**Core agents:** slack-expert
+**Language agents:** typescript-pro OR python-pro
+**Infra agents:** devops-engineer
 
 ### Real-time Communication
 

@@ -77,6 +77,14 @@ All runtime file templates created by the PDLC orchestrator in the target projec
     "prd": false,
     "excalidraw-diagram-generator": false
   },
+  "execution_mode": "subagent",
+  "agent_teams": {
+    "available": false,
+    "env_var_set": false,
+    "tools_available": false,
+    "phases_using_teams": [],
+    "fallback_count": 0
+  },
   "role_hierarchy": {
     "manager": "pdlc-orchestrator",
     "product_manager": "product-manager",

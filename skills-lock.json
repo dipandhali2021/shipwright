@@ -2,9 +2,9 @@
   "version": 1,
   "skills": {
     "excalidraw-diagram-generator": {
-      "source": "github/awesome-copilot",
+      "source": "dipandhali2021/shipwright",
       "sourceType": "github",
-      "computedHash": "e24e3c4cab4b5a07bc1d1801db14868f3a1cd184f7f28f5dd2c4a2b234bf2f2d"
+      "computedHash": "48103cd2f41d49a8153e4c5d29e034c5788d2d9d7488767da1dc54eeb4114a31"
     },
     "gh-cli": {
       "source": "github/awesome-copilot",
