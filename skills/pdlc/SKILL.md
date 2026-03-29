@@ -79,14 +79,16 @@ Based on the parsed command:
 4. Display roadmap summary to the user
 
 #### `research`
-1. **Ask the user for a research domain** — before starting, prompt:
-   `"What domain or category should I research? (e.g., developer tools, fintech, health tech, AI/ML, education, gaming, e-commerce, IoT, security, or describe your own)"`
-   - If the user provides a domain: store it in `config.json` as `research_domain` and pass to orchestrator
-   - If the user says "anything" or gives no preference: use `"general technology trends"` as default
-   - If `/pdlc research <domain>` is provided inline: use that domain directly without prompting
+1. **Ask the user for research domain AND project type** — before starting, prompt:
+   `"What domain should I research? (e.g., developer tools, fintech, health tech, AI/ML, education, gaming, e-commerce, IoT, security, or describe your own)"`
+   `"What type of project? (e.g., web full-stack, backend API, frontend SPA, mobile app, CLI tool, desktop app, browser extension, library/SDK, or describe your own)"`
+   - If the user provides both: store in `config.json` as `research_domain` and `project_type_preference`
+   - If the user says "anything" or gives no preference: use `"general technology trends"` and `"web full-stack"` as defaults
+   - If `/pdlc research <domain> <type>` is provided inline: use both directly without prompting
+   - Examples: `/pdlc research fintech mobile-app`, `/pdlc research "health tech" "backend API"`
 2. Initialize `.pdlc/` if needed, set `current_phase: "RESEARCH"`
-3. Spawn the pdlc-orchestrator agent with directive: execute RESEARCH phase with `research_domain: "[user's domain]"`
-4. The orchestrator handles all agent delegation per `references/agent-registry.md`, scoping all trend scanning to the specified domain
+3. Spawn the pdlc-orchestrator agent with directive: execute RESEARCH phase with `research_domain` and `project_type_preference`
+4. The orchestrator handles all agent delegation per `references/agent-registry.md`, scoping all trend scanning to the specified domain AND project type
 5. On completion: display the project selection results to the user
 
 #### `plan`
@@ -176,6 +178,7 @@ Project state:
 - Current sprint: [N of M]
 - Tech stack: [from config.json if set]
 - Research domain: [from config.json research_domain, or "general technology trends"]
+- Project type: [from config.json project_type_preference, or "web full-stack"]
 - Execution mode: [agent-teams | subagent]
 
 Execution mode notes:

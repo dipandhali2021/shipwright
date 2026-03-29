@@ -14,6 +14,23 @@
 
 > **Note:** The 138 agent definitions in this project are derived from [VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents), an open-source collection of Claude Code subagents. Shipwright extends them with 16 PDLC skills and a full autonomous sprint-based development orchestrator.
 
+## What is Shipwright?
+
+Shipwright is an autonomous software development system that runs inside Claude Code. Give it a domain and project type, and it will:
+
+1. **Research** trending projects in your chosen domain
+2. **Plan** the product — vision, requirements, sprint backlog with subtask breakdowns
+3. **Design** the architecture — tech stack, system design, API specs
+4. **Develop** in realistic 7-day sprints with day-by-day commits from specialized agents
+5. **Test** with automated test suites and security audits
+6. **Deploy** with CI/CD pipelines and release management
+7. **Review** with sprint demos, retrospectives, and 1:1 agent coaching
+8. **Improve** — feed learnings into the next sprint so agents get better over time
+
+The entire lifecycle is managed by a three-tier hierarchy: a Manager (orchestrator), a Product Manager, and 100+ specialized Software Engineer agents.
+
+---
+
 ## Installation
 
 ### One-Liner Install (Recommended)
@@ -24,7 +41,7 @@ curl -fsSL https://raw.githubusercontent.com/dipandhali2021/shipwright/main/inst
 
 Or from a cloned repo:
 ```bash
-git clone https://github.com/dipandhali2021/shipwright && cd claude-code && bash install.sh
+git clone https://github.com/dipandhali2021/shipwright && cd shipwright && bash install.sh
 ```
 
 Installs all 16 skills + 138 agents + skills-lock.json to `.claude/`.
@@ -44,9 +61,234 @@ git clone https://github.com/dipandhali2021/shipwright.git && cd shipwright
 ```
 Interactive TUI to browse and selectively install/uninstall agents.
 
+---
+
+## PDLC Commands
+
+| Command | Description |
+|---------|-------------|
+| `/pdlc` | Resume from current state |
+| `/pdlc research` | Research trending projects (asks for domain + project type) |
+| `/pdlc research <domain> <type>` | Research with inline domain and type (e.g., `/pdlc research fintech mobile-app`) |
+| `/pdlc plan` | Create product plan + architecture design |
+| `/pdlc sprint` | Run one full sprint cycle (develop + test + deploy + review + improve) |
+| `/pdlc deploy` | Deploy current sprint |
+| `/pdlc review` | Run review + improvement phase |
+| `/pdlc full-cycle` | End-to-end: research through all sprints to completion |
+| `/pdlc dashboard` | Show project dashboard with metrics |
+| `/pdlc status` | Show current project state |
+| `/pdlc roadmap` | Create or update the product roadmap |
+
+Natural language also works:
+- "what should I build" / "find trending projects" triggers **research**
+- "start a new project" / "build something" triggers **full-cycle**
+- "next sprint" / "continue building" triggers **sprint**
+- "how's the project going" triggers **status**
+
+---
+
+## How It Works
+
+### Phase 1: Research
+
+Before scanning, Shipwright asks you two questions:
+
+1. **Domain** — What area to research (developer tools, fintech, health tech, AI/ML, education, gaming, e-commerce, IoT, security, etc.)
+2. **Project Type** — What kind of project to build (web full-stack, backend API, frontend SPA, mobile app, CLI tool, desktop app, browser extension, library/SDK, etc.)
+
+Four research agents then scan in waves:
+- **Wave 1:** trend-analyst + search-specialist + market-researcher scan the domain
+- **Wave 2:** competitive-analyst + data-researcher analyze existing solutions
+- **Wave 3:** research-analyst scores candidates (0-100) and recommends the top pick
+
+Each research artifact is committed individually with realistic 1-2 hour gaps between commits using `research:` prefix.
+
+### Phase 2: Planning & Design
+
+- Product vision, requirements, and sprint plan created
+- Stories decomposed into **8-12 subtasks** each — every subtask maps to one commit
+- Architecture decisions documented as ADRs
+- Tech stack selected based on project type and agent capabilities
+- **Google Stitch MCP** generates UI/UX designs (if configured)
+
+### Phase 3: Sprint Execution (7-Day Cycle)
+
+Each sprint follows a realistic 7-day schedule:
+
+```
+Monday:    Sprint Planning — stories assigned, subtasks created
+Tuesday:   Day 1 — standup, subtask sessions, staggered commits
+Wednesday: Day 2 — standup, continue subtasks
+Thursday:  Day 3 — standup, core work progressing
+Friday:    Day 4 — standup, mid-sprint push
+Saturday:  Day 5 — standup, stories targeting completion
+Sunday:    Integration + Sprint Review + Retrospective
+```
+
+#### Session-Based Execution
+
+Development runs as a series of short Claude sessions:
+
+```
+┌─────────────────────────────────────────┐
+│  Session: Each agent does ONE subtask   │
+│  → github-ops-manager commits it        │
+│  → staggered timestamp per agent        │
+└─────────────────────────────────────────┘
+              ↓ 1-2 hour gap
+┌─────────────────────────────────────────┐
+│  Next session: agents pick next subtask │
+└─────────────────────────────────────────┘
+```
+
+- **5-12 sessions per day** (randomized, not fixed)
+- **Staggered commit times** — each agent commits at a different time using `GIT_AUTHOR_DATE`/`GIT_COMMITTER_DATE`
+- **No WIP commits** — every commit is a complete, self-contained subtask
+- **Conventional commits** — `feat:`, `fix:`, `test:`, `refactor:`, `chore:` with `Refs #N` issue linking
+
+#### Daily Standups
+
+Standups run at the start of each sprint day, tracking subtask-level progress:
+
+```
+Standup — Day 3 (Thursday)
+
+react-specialist:
+  Yesterday: 3 subtasks — form validation, login API, error handling
+  Today: Signup form, signup API, login tests
+  Story S-1-01: 7/10 subtasks done
+  Blockers: None
+
+backend-developer:
+  Yesterday: 3 subtasks — auth middleware, JWT tokens, password hashing
+  Today: Integration tests, error responses, rate limiting
+  Story S-1-02: 5/10 subtasks done
+  Blockers: Need JWT_SECRET in env
+```
+
+### Phase 4: Review & Improvement
+
+Every sprint MUST complete with review and improvement — they are not optional:
+
+- **Sprint Review** — Each agent demos completed work; product-manager evaluates against acceptance criteria; simulated user personas provide feedback
+- **Sprint Retrospective** — All agents share what went well / didn't / suggestions; scrum-master synthesizes action items
+- **1:1 Coaching** — Orchestrator holds coaching sessions with underperforming agents; coaching notes are prepended to agent context in all future sprints
+- **Improvement Backlog** — Retro action items, coaching fixes, tech debt, and error patterns are converted into GitHub issues and queued as stories for the next sprint
+
+### Phase 5: Next Sprint
+
+Improvement stories from the previous sprint are automatically prioritized alongside new feature stories. The product-manager decides what goes into each sprint. The loop continues until all planned sprints complete.
+
+```
+RESEARCH → PLANNING → DESIGN → [DEVELOPMENT → TESTING → DEPLOYMENT → REVIEW → IMPROVE] → next sprint → ... → COMPLETE
+```
+
+---
+
+## Three-Tier Role Hierarchy
+
+| Tier | Role | Responsibilities |
+|------|------|-----------------|
+| **Tier 1: Manager** | pdlc-orchestrator | Oversees full lifecycle, delegates to PMs and engineers, conducts coaching. Never writes code. |
+| **Tier 2: Product Manager** | product-manager | Owns the backlog, prioritizes features, evaluates deliverables. Does not make architecture decisions. |
+| **Tier 3: Engineers** | 100+ specialized agents | Execute assigned stories using domain expertise. Do not self-assign work. |
+
+---
+
+## Execution Modes
+
+### Subagent Mode (Default)
+
+The orchestrator spawns child agents via Claude Code's Agent tool. Children execute tasks and report back. Works everywhere.
+
+### Agent Teams Mode (Experimental)
+
+Multiple Claude Code instances work as a coordinated team with a shared task list and peer-to-peer messaging. Enables true parallel execution.
+
+```bash
+# Enable Agent Teams
+export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=true
+```
+
+| Phase | Agent Teams? | Why |
+|-------|-------------|-----|
+| RESEARCH | Yes | 3+ agents self-coordinate wave-based scanning |
+| PLANNING | No | Sequential pipeline, orchestrator control needed |
+| DESIGN | No | Hub-spoke pattern, Stitch MCP is orchestrator-driven |
+| DEVELOPMENT | **Yes (primary)** | 4 concurrent devs self-assign stories, peer-coordinate |
+| TESTING | Yes | Independent test streams, real-time peer critique |
+| DEPLOYMENT | No | Safety-critical, needs orchestrator gating |
+| REVIEW | Yes | Concurrent demos, peer retro reflections |
+| IMPROVE | No | Orchestrator-driven coaching, inherently hierarchical |
+
+Falls back to subagent mode automatically when Agent Teams is not available.
+
+---
+
+## Integrations
+
+### Google Stitch MCP
+
+AI-powered design-to-code for projects with a frontend component:
+- `enhance-prompt` — refine vague UI ideas into detailed design specs
+- `stitch-design` — generate high-fidelity screen designs
+- `react-components` — convert designs to validated React components
+- `stitch-loop` — generate complete multi-page app structure
+
+```bash
+claude mcp add stitch --transport http https://stitch.googleapis.com/mcp --header "X-Goog-Api-Key: YOUR_KEY" -s user
+```
+
+### GitHub Operations
+
+The `github-ops-manager` agent coordinates all GitHub workflows:
+- **Commits** — Conventional commits with staggered timestamps per agent
+- **Issues** — One issue per user story, updated with subtask progress
+- **PRs** — Sprint PR with all stories, linked issues, reviewed by code-reviewer and architect-reviewer
+- **Releases** — Tagged releases after each sprint
+- **Gists** — Share sprint artifacts externally
+
+### External Skills
+
+| Category | Skills |
+|----------|--------|
+| Sprint Ceremonies | sprint-planning, scrum-master, task-estimation, standup-meeting, sprint-retrospective |
+| Roadmap | roadmap-update |
+| GitHub | git-commit, github-issues, gh-cli, pr-create, prd, excalidraw-diagram-generator |
+| Video | remotion-best-practices |
+
+---
+
+## PDLC Artifacts
+
+All PDLC state is stored in `.pdlc/` in the project directory:
+
+```
+.pdlc/
+├── config.json              # Project state, phase, sprint progress, session tracking
+├── dashboard.md             # Project dashboard with metrics
+├── research/                # Research artifacts (trend scans, market analysis, project selection)
+├── architecture/            # System design, API spec, ADRs, roadmap
+│   └── adr/
+├── sprints/
+│   └── sprint-N/
+│       ├── plan.md          # Sprint plan with subtask breakdowns
+│       ├── results.md       # Sprint results and metrics
+│       ├── meetings/        # Planning, standups, review, retro transcripts
+│       ├── agent-log.md     # All agent invocations and decisions
+│       └── improvement-backlog.md  # Improvement items for next sprint
+└── retrospective/
+    ├── coaching/            # Per-agent coaching profiles (cumulative)
+    ├── self-improvement-log.md
+    ├── recommendations.md
+    └── tech-debt.md
+```
+
+---
+
 ## Agents
 
-The 138 agents are organized into 10 categories below. All agents are derived from [VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents).
+The 138 agents are organized into 10 categories. All agents are derived from [VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents).
 
 ### [01. Core Development](agents/)
 Essential development subagents for everyday coding tasks.
@@ -228,64 +470,13 @@ Research, search, and analysis specialists.
 - [**data-researcher**](agents/data-researcher.md) - Data discovery and analysis expert
 - [**scientific-literature-researcher**](agents/scientific-literature-researcher.md) - Scientific paper search and evidence synthesis via [BGPT MCP](https://github.com/connerlambden/bgpt-mcp)
 
-## 🤖 Understanding Subagents
+---
 
-Subagents are specialized AI assistants that enhance Claude Code's capabilities by providing task-specific expertise. They act as dedicated helpers that Claude Code can call upon when encountering particular types of work.
+## Understanding Subagents
 
-### What Makes Subagents Special?
+Subagents are specialized AI assistants that enhance Claude Code's capabilities. Each operates in its own context window with domain-specific instructions and granular tool permissions.
 
-**Independent Context Windows**  
-Every subagent operates within its own isolated context space, preventing cross-contamination between different tasks and maintaining clarity in the primary conversation thread.
-
-**Domain-Specific Intelligence**  
-Subagents come equipped with carefully crafted instructions tailored to their area of expertise, resulting in superior performance on specialized tasks.
-
-**Shared Across Projects**  
-After creating a subagent, you can utilize it throughout various projects and distribute it among team members to ensure consistent development practices.
-
-**Granular Tool Permissions**  
-You can configure each subagent with specific tool access rights, enabling fine-grained control over which capabilities are available for different task types.
-
-### Core Advantages
-
-- **Memory Efficiency**: Isolated contexts prevent the main conversation from becoming cluttered with task-specific details
-- **Enhanced Accuracy**: Specialized prompts and configurations lead to better results in specific domains
-- **Workflow Consistency**: Team-wide subagent sharing ensures uniform approaches to common tasks
-- **Security Control**: Tool access can be restricted based on subagent type and purpose
-
-### Getting Started with Subagents
-
-**1. Access the Subagent Manager**
-```bash
-/agents
-```
-
-**2. Create Your Subagent**
-- Choose between project-specific or global subagents
-- Let Claude generate an initial version, then refine it to your needs
-- Provide detailed descriptions of the subagent's purpose and activation triggers
-- Configure tool access (leave empty to inherit all available tools)
-- Customize the system prompt using the built-in editor (press `e`)
-
-**3. Deploy and Utilize**
-Your subagent becomes immediately available. Claude Code will automatically engage it when suitable, or you can explicitly request its help:
-```
-> Have the code-reviewer subagent analyze my latest commits
-```
-
-### Subagent Storage Locations
-
-| Type | Path | Availability | Precedence |
-|------|------|--------------|------------|
-| Project Subagents | `.claude/agents/` | Current project only | Higher |
-| Global Subagents | `~/.claude/agents/` | All projects | Lower |
-
-Note: When naming conflicts occur, project-specific subagents override global ones.
-
-
-## 📖 Subagent Structure
-
-Each subagent follows a standardized template:
+### Subagent Structure
 
 ```yaml
 ---
@@ -295,42 +486,40 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
 ---
 
-You are a [role description and expertise areas]...
+You are a [role description]...
 
-[Agent-specific checklists, patterns, and guidelines]...
-
-## Communication Protocol
-Inter-agent communication specifications...
-
-## Development Workflow
-Structured implementation phases...
+[Agent-specific checklists, patterns, guidelines]
 ```
 
-### Tool Assignment Philosophy
+### Model Routing
 
-### Smart Model Routing
+| Model | When Used | Examples |
+|-------|-----------|---------|
+| `opus` | Deep reasoning — architecture reviews, security audits | `security-auditor`, `architect-reviewer` |
+| `sonnet` | Everyday coding — writing, debugging, refactoring | `python-pro`, `backend-developer` |
+| `haiku` | Quick tasks — docs, search, dependency checks | `documentation-engineer`, `build-engineer` |
 
-Each subagent includes a `model` field that automatically routes it to the right Claude model — balancing quality and cost:
+### Tool Permissions by Role
 
-| Model | When It's Used | Examples |
-|-------|----------------|----------|
-| `opus` | Deep reasoning — architecture reviews, security audits, financial logic | `security-auditor`, `architect-reviewer`, `fintech-engineer` |
-| `sonnet` | Everyday coding — writing, debugging, refactoring | `python-pro`, `backend-developer`, `devops-engineer` |
-| `haiku` | Quick tasks — docs, search, dependency checks | `documentation-engineer`, `seo-specialist`, `build-engineer` |
+| Role Type | Tools | Purpose |
+|-----------|-------|---------|
+| Read-only (reviewers) | `Read, Grep, Glob` | Analyze without modifying |
+| Research (analysts) | `Read, Grep, Glob, WebFetch, WebSearch` | Gather information |
+| Code writers (developers) | `Read, Write, Edit, Bash, Glob, Grep` | Create and execute |
+| Documentation | `Read, Write, Edit, Glob, Grep, WebFetch, WebSearch` | Document with research |
 
-You can override any agent's model by editing the `model` field in its frontmatter. Set `model: inherit` to use whatever model your main conversation is using.
+### Storage Locations
 
-### Tool Assignment Philosophy
+| Type | Path | Scope |
+|------|------|-------|
+| Project | `.claude/agents/` | Current project only |
+| Global | `~/.claude/agents/` | All projects |
 
-Each subagent's `tools` field specifies Claude Code built-in tools, optimized for their role:
-- **Read-only agents** (reviewers, auditors): `Read, Grep, Glob` - analyze without modifying
-- **Research agents** (analysts, researchers): `Read, Grep, Glob, WebFetch, WebSearch` - gather information
-- **Code writers** (developers, engineers): `Read, Write, Edit, Bash, Glob, Grep` - create and execute
-- **Documentation agents** (writers, documenters): `Read, Write, Edit, Glob, Grep, WebFetch, WebSearch` - document with research
+Project subagents take precedence over global ones with the same name.
 
-Each agent has minimal necessary permissions. You can extend agents by adding MCP servers or external tools to the `tools` field.
+---
 
-## 🧰 Tools
+## Tools
 
 ### [subagent-catalog](tools/subagent-catalog/)
 Claude Code skill for browsing and fetching subagents from this catalog.
@@ -347,9 +536,9 @@ Claude Code skill for browsing and fetching subagents from this catalog.
 cp -r tools/subagent-catalog ~/.claude/commands/
 ```
 
+---
 
-
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
@@ -357,15 +546,13 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 - Improve existing definitions
 - Report issues and bugs
 
-## Contributor ♥️ Thanks
+## Contributors
 ![Contributors](https://contrib.rocks/image?repo=dipandhali2021/shipwright&max=500&columns=20&anon=1)
 
-
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE)
 
 This repository is a curated collection of subagent definitions contributed by both the maintainers and the community. All subagents are provided "as is" without warranty. We do not audit or guarantee the security or correctness of any subagent. Review before use, the maintainers accept no liability for any issues arising from their use.
 
 If you find an issue, please [open an issue](https://github.com/dipandhali2021/shipwright/issues) and we'll address it promptly.
-

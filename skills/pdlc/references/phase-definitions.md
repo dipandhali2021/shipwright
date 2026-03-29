@@ -45,12 +45,12 @@ The orchestrator MUST include the required reading list in every agent spawn inv
 
 ## Phase 1: RESEARCH
 
-**Purpose:** Identify trending real-world projects, technologies, and market opportunities worth building autonomously, scoped to a user-specified domain.
+**Purpose:** Identify trending real-world projects, technologies, and market opportunities worth building autonomously, scoped to a user-specified domain and project type.
 
 ### Entry Criteria
 - PDLC initialized (`.pdlc/config.json` exists with `current_phase: "INIT"` or `"RESEARCH"`)
 - OR explicit `/pdlc research` command received
-- `research_domain` set in config.json (prompted by SKILL.md before orchestrator spawn)
+- `research_domain` and `project_type_preference` set in config.json (prompted by SKILL.md before orchestrator spawn)
 
 ### Domain Scoping
 All research agents MUST scope their search to the domain specified in `config.json.research_domain`. Examples:
@@ -61,6 +61,28 @@ All research agents MUST scope their search to the domain specified in `config.j
 - `"general technology trends"` → broad scan across all domains (default if user gives no preference)
 
 If the domain is too narrow and produces fewer than 3 viable candidates after wave 1, broaden to the nearest parent domain (e.g., "Rust CLI tools" → "developer tools") and retry.
+
+### Project Type Scoping
+All research agents MUST also filter results by the project type specified in `config.json.project_type_preference`. This determines WHAT KIND of project gets built, not just what domain:
+
+| Project Type | What to Look For |
+|-------------|-----------------|
+| `web full-stack` | Full-stack web apps (React/Next.js + API + database) |
+| `backend API` | REST/GraphQL APIs, microservices, server-side tools |
+| `frontend SPA` | Single-page applications, dashboards, UI-heavy apps |
+| `mobile app` | iOS/Android apps, React Native, Flutter projects |
+| `CLI tool` | Command-line utilities, terminal tools, developer CLIs |
+| `desktop app` | Electron, Tauri, native desktop applications |
+| `browser extension` | Chrome/Firefox extensions, web plugins |
+| `library/SDK` | Reusable packages, SDKs, frameworks |
+
+Domain + type work together. Examples:
+- `"fintech"` + `"mobile app"` → scan fintech mobile apps, payment SDKs for mobile, mobile banking tools
+- `"developer tools"` + `"CLI tool"` → scan developer CLIs, terminal utilities, build tools
+- `"education"` + `"web full-stack"` → scan ed-tech platforms, learning management systems, course builders
+- `"AI/ML"` + `"library/SDK"` → scan ML frameworks, AI toolkits, model serving libraries
+
+The scoring rubric Feasibility dimension should account for the project type's complexity (e.g., mobile apps require more setup than CLI tools).
 
 ### Activities
 1. **Trend scanning (parallel, wave 1):**

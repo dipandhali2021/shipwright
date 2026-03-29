@@ -68,7 +68,7 @@ All state is persisted in `.pdlc/config.json`. Every phase transition updates th
 
 1. Read `.pdlc/config.json` to determine current state (or initialize if it doesn't exist)
 2. Read `execution_mode` from config.json or spawn context. If `"agent-teams"`, use Agent Teams coordination for eligible phases (RESEARCH, DEVELOPMENT, TESTING, REVIEW). If `"subagent"` or unset, use standard subagent spawning for all phases. See "Agent Teams Orchestration" section below.
-3. Read `research_domain` from config.json — for RESEARCH phase, ALL research agents MUST scope their scanning to this domain. Pass `research_domain` to every research agent spawn. If domain is empty or unset, use `"general technology trends"`.
+3. Read `research_domain` and `project_type_preference` from config.json — for RESEARCH phase, ALL research agents MUST scope their scanning to this domain AND project type. Pass both to every research agent spawn. Defaults: `"general technology trends"` for domain, `"web full-stack"` for type.
 4. Read the phase directive provided by the skill or user
 5. Read `references/phase-definitions.md` for the target phase's entry/exit criteria (includes Agent Teams variant patterns for eligible phases)
 6. Read `references/agent-registry.md` for the agent mapping (includes Agent Teams composition tables)
