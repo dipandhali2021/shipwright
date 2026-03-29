@@ -402,28 +402,61 @@ Research artifacts are committed individually, not as a batch:
 1. After all stories complete, verify code compiles and basic tests pass
 2. Write agent-log.md with all invocations, outcomes, and contribution details
 3. Update decision-journal.md and tech-debt.md
-4. **Update CLAUDE.md** — If any sprint changes affected repository structure, architecture, workflows, integrations, or key file paths, update the project's `CLAUDE.md` to reflect the current state. This ensures Claude Code always has accurate project context. Check for:
+4. **Update the project's README.md** — After each sprint, update the built project's README with:
+   - Project name, description, and what it does
+   - Installation instructions (how to set up and run)
+   - Usage examples (commands, API endpoints, UI screenshots — whatever applies)
+   - Features completed so far (update incrementally each sprint)
+   - Tech stack and architecture overview
+   - Contributing guidelines (if open source)
+   - License
+   - This is the README of the PROJECT BEING BUILT, not Shipwright's README
+   - First sprint: create from scratch. Later sprints: update with new features, changed setup, etc.
+   - Commit as `docs: update README with sprint N features`
+5. **Update CLAUDE.md** — If any sprint changes affected repository structure, architecture, workflows, integrations, or key file paths, update the project's `CLAUDE.md` to reflect the current state. This ensures Claude Code always has accurate project context. Check for:
    - New directories or files added to repo structure
    - Architecture changes (new integrations, changed patterns)
    - Workflow changes (new commands, modified processes)
    - Agent additions/removals that affect the registry
-5. **Sprint PR Creation** — Spawn github-ops-manager:
+6. **Sprint PR Creation** — Spawn github-ops-manager:
    - Creates branch `pdlc/sprint-N`, pushes all sprint commits
    - Uses `pr-create` skill: summarizes all sprint stories, links all issues via `Closes #N`
    - Adds labels (`sprint`, `pdlc`, `sprint-N`), links milestone
    - **code-reviewer** (04-quality-security) reviews the PR for code quality, patterns, and best practices
    - **architect-reviewer** (04-quality-security) reviews the PR for architecture quality and scalability
    - Both reviewers post findings as PR comments via `gh-cli`; rework items flagged before merge
-6. **Create GitHub Release** — Spawn github-ops-manager with operation: `release`:
+7. **Create Sprint Release** — Spawn github-ops-manager with operation: `release`:
    - **If `github-release` skill available:** Run pre-release sanitization (secrets scan, license check, README validation, .gitignore check, dependency audit), then create tagged release with auto-generated notes
    - **If skill not available:** Fall back to `gh release create vN.N.N --generate-notes`
    - Version: `v0.N.0` for sprint N (or semver from package.json)
    - Return release URL for user reference
-7. **Upload sprint artifacts to Gist** (optional, on request) — Spawn github-ops-manager:
+8. **Upload sprint artifacts to Gist** (optional, on request) — Spawn github-ops-manager:
    - Upload sprint results, architecture docs, or any PDLC artifacts to GitHub Gist for external sharing
    - Use `gh gist create` with multiple files in a single gist
    - Return the Gist URL to the orchestrator for user reference
-8. Transition to TESTING phase → DEPLOYMENT → then REVIEW + IMPROVE (every sprint MUST complete the full cycle)
+9. Transition to TESTING phase → DEPLOYMENT → then REVIEW + IMPROVE (every sprint MUST complete the full cycle)
+
+### Project Completion — Final Release
+
+When all planned sprints are complete (`current_sprint >= total_planned_sprints`):
+
+1. **Final README.md polish** — Ensure the project's README is comprehensive and production-ready:
+   - Complete feature list (all sprints)
+   - Clear installation and setup instructions
+   - Usage guide with examples
+   - API documentation (if applicable)
+   - Configuration options
+   - Architecture overview
+   - Contributing guidelines and license
+   - Badges (build status, version, license)
+2. **Final GitHub Release** — Spawn github-ops-manager with operation: `release`:
+   - Use `github-release` skill for full sanitization before going public
+   - Version: `v1.0.0` (first major release)
+   - Title: `v1.0.0 — [project name]`
+   - Release notes: comprehensive summary of all sprints, features, and architecture
+   - Mark as latest release (not pre-release)
+3. Set `current_phase: "COMPLETE"` in config.json
+4. Write final project summary to `.pdlc/project-summary.md`
 
 ### Sunday PM: Sprint Review Meeting
 

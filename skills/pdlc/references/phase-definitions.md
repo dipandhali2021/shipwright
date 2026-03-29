@@ -373,6 +373,7 @@ All artifacts are written to identical paths as subagent mode. Entry/exit criter
 - Basic tests exist for new code
 - Code compiles/runs without errors
 - Git history shows day-by-day commit progression with staggered timestamps per agent (5–12 commits per agent per day)
+- **Project README.md updated** with features built this sprint (installation, usage, feature list — incrementally updated each sprint)
 - Sprint agent log written to `.pdlc/sprints/sprint-N/agent-log.md` with daily subtask progress per agent
 - Standup log written to `.pdlc/sprints/sprint-N/standups.md` with subtask tracking (done/total)
 - Decision journal updated if significant decisions were made
@@ -752,14 +753,46 @@ Before transitioning, the orchestrator converts improvement findings into action
 ### Transition Decision
 After IMPROVE, the orchestrator decides:
 - **If `current_sprint < total_planned_sprints`:** increment `current_sprint`, set `current_phase: "DEVELOPMENT"`, continue to next sprint (improvement stories already queued in backlog)
-- **If `current_sprint >= total_planned_sprints`:** set `current_phase: "COMPLETE"`, write final project summary (include unresolved improvement items as future work)
+- **If `current_sprint >= total_planned_sprints`:** execute **Project Completion** (see below), then set `current_phase: "COMPLETE"`
 - **If roadmap needs major adjustment:** set `current_phase: "PLANNING"`, re-plan remaining sprints (improvement items feed into re-planning)
+
+### Project Completion (when all sprints done)
+
+When `current_sprint >= total_planned_sprints`, the project is finished. Before setting COMPLETE:
+
+1. **Final README.md** — Polish the built project's README to production quality:
+   - Complete feature list covering all sprints
+   - Clear installation and setup instructions
+   - Usage guide with examples (commands, API endpoints, screenshots)
+   - Configuration options
+   - Architecture overview
+   - Contributing guidelines and license
+   - Badges (build status, version, license)
+   - Commit as `docs: finalize README for v1.0.0 release`
+
+2. **Final GitHub Release** — Spawn github-ops-manager with operation: `release`:
+   - Use `github-release` skill for full pre-release sanitization (secrets scan, license, README, .gitignore, dependencies)
+   - Version: `v1.0.0` (first major release)
+   - Title: `v1.0.0 — [project name]`
+   - Release notes: comprehensive summary of all sprints, features, and architecture
+   - Mark as latest release (not pre-release, not draft)
+   - If `github-release` skill not available: `gh release create v1.0.0 --title "v1.0.0 — [project name]" --generate-notes`
+
+3. **Write final project summary** to `.pdlc/project-summary.md`:
+   - All sprints completed, total stories delivered
+   - Key metrics: velocity trend, test pass rate, total commits
+   - Unresolved improvement items flagged as future work
+   - Release URL
+
+4. Set `current_phase: "COMPLETE"` in config.json
 
 ### Exit Criteria
 - Self-improvement log updated
 - Agent performance scores updated
 - Recommendations document written
 - `CLAUDE.md` updated if sprint cycle changed repo structure, architecture, or workflows
+- Project README.md is comprehensive and production-ready
+- GitHub release created (sprint release for each sprint, final v1.0.0 at completion)
 - `config.json` updated with next phase decision
 
 ### Error Handling
