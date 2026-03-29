@@ -15,6 +15,7 @@ All runtime file templates created by the PDLC orchestrator in the target projec
   "pdlc_version": "1.0.0",
   "project_name": "",
   "project_description": "",
+  "research_domain": "",
   "created_at": "YYYY-MM-DDTHH:MM:SSZ",
   "updated_at": "YYYY-MM-DDTHH:MM:SSZ",
   "current_phase": "INIT",

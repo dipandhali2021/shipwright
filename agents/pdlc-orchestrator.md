@@ -68,13 +68,14 @@ All state is persisted in `.pdlc/config.json`. Every phase transition updates th
 
 1. Read `.pdlc/config.json` to determine current state (or initialize if it doesn't exist)
 2. Read `execution_mode` from config.json or spawn context. If `"agent-teams"`, use Agent Teams coordination for eligible phases (RESEARCH, DEVELOPMENT, TESTING, REVIEW). If `"subagent"` or unset, use standard subagent spawning for all phases. See "Agent Teams Orchestration" section below.
-3. Read the phase directive provided by the skill or user
-4. Read `references/phase-definitions.md` for the target phase's entry/exit criteria (includes Agent Teams variant patterns for eligible phases)
-5. Read `references/agent-registry.md` for the agent mapping (includes Agent Teams composition tables)
-6. Read available GitHub skills (git-commit, github-issues, gh-cli, pr-create, prd, excalidraw-diagram-generator)
-7. Execute the phase by spawning agents (subagent mode) or creating tasks on shared task list (agent-teams mode)
-8. Validate exit criteria are met
-9. Update config.json and transition to next phase
+3. Read `research_domain` from config.json — for RESEARCH phase, ALL research agents MUST scope their scanning to this domain. Pass `research_domain` to every research agent spawn. If domain is empty or unset, use `"general technology trends"`.
+4. Read the phase directive provided by the skill or user
+5. Read `references/phase-definitions.md` for the target phase's entry/exit criteria (includes Agent Teams variant patterns for eligible phases)
+6. Read `references/agent-registry.md` for the agent mapping (includes Agent Teams composition tables)
+7. Read available GitHub skills (git-commit, github-issues, gh-cli, pr-create, prd, excalidraw-diagram-generator)
+8. Execute the phase by spawning agents (subagent mode) or creating tasks on shared task list (agent-teams mode)
+9. Validate exit criteria are met
+10. Update config.json and transition to next phase
 
 ## Initialization Protocol
 
@@ -193,7 +194,7 @@ Context: Sprint 2 of 4, React + TypeScript stack, JWT authentication
 
 ## Sprint Lifecycle Management
 
-A sprint is structured as a real Scrum week with proper ceremonies. Each ceremony is a simulated meeting where agents interact, debate, and produce minutes. All meeting transcripts are stored in `.pdlc/sprints/sprint-N/meetings/`.
+A sprint is a complete cycle: DEVELOPMENT → TESTING → DEPLOYMENT → REVIEW → IMPROVE. Every sprint MUST include the review and improvement phases — they are not optional. Each ceremony is a simulated meeting where agents interact, debate, and produce minutes. All meeting transcripts are stored in `.pdlc/sprints/sprint-N/meetings/`.
 
 **Ceremony Delegation:** For each ceremony, spawn `sprint-ceremony-manager` to coordinate skill invocations and produce meeting artifacts. The sprint-ceremony-manager knows which skills to invoke (sprint-planning, scrum-master, task-estimation, standup-meeting, sprint-retrospective, roadmap-update) and handles graceful degradation when skills are unavailable. The orchestrator provides context; the ceremony manager runs the ceremony and returns the transcript.
 
@@ -417,7 +418,7 @@ Research artifacts are committed individually, not as a batch:
    - Upload sprint results, architecture docs, or any PDLC artifacts to GitHub Gist for external sharing
    - Use `gh gist create` with multiple files in a single gist
    - Return the Gist URL to the orchestrator for user reference
-7. Transition to TESTING phase
+7. Transition to TESTING phase → DEPLOYMENT → then REVIEW + IMPROVE (every sprint MUST complete the full cycle)
 
 ### Sunday PM: Sprint Review Meeting
 
@@ -483,6 +484,18 @@ The retro is a structured multi-agent conversation:
    - Context improvements (what docs to provide to which agents)
 
 4. **Orchestrator commits** to specific adaptations and logs them
+
+### Post-Sprint: Feed Improvements into Next Sprint
+
+After REVIEW + IMPROVE complete, improvement findings are converted into actionable next-sprint work:
+
+1. **From retro action items:** github-ops-manager creates GitHub issues labeled `improvement`, `sprint-N+1`
+2. **From coaching notes:** If coaching identified missing docs or unclear specs → create `chore:` stories
+3. **From error analysis:** If failure patterns found → create `fix:` stories to address root causes
+4. **From tech debt:** If refactoring-specialist flagged debt → create `refactor:` stories
+5. All improvement stories written to `.pdlc/sprints/sprint-N+1/improvement-backlog.md`
+6. product-manager prioritizes these alongside feature stories in next Sprint Planning Meeting
+7. This ensures every sprint directly benefits from the previous sprint's learnings — not just documented, but acted upon
 
 ### Post-Sprint: 1:1 Coaching Meetings
 

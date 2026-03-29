@@ -23,9 +23,9 @@ Parse the user's input to determine which command to execute:
 | User Says | Command | Phases Executed |
 |-----------|---------|-----------------|
 | `/pdlc` (no args) | **resume** | Continue from current state |
-| `/pdlc research` | **research** | RESEARCH only |
+| `/pdlc research` or `/pdlc research <domain>` | **research** | RESEARCH only (asks for domain) |
 | `/pdlc plan` | **plan** | PLANNING + DESIGN |
-| `/pdlc sprint` | **sprint** | DEVELOPMENT + TESTING |
+| `/pdlc sprint` | **sprint** | DEVELOPMENT + TESTING + DEPLOYMENT + REVIEW + IMPROVE |
 | `/pdlc deploy` | **deploy** | DEPLOYMENT |
 | `/pdlc review` | **review** | REVIEW + IMPROVE |
 | `/pdlc full-cycle` | **full-cycle** | All 8 phases end-to-end |
@@ -79,10 +79,15 @@ Based on the parsed command:
 4. Display roadmap summary to the user
 
 #### `research`
-1. Initialize `.pdlc/` if needed, set `current_phase: "RESEARCH"`
-2. Spawn the pdlc-orchestrator agent with directive: execute RESEARCH phase
-3. The orchestrator handles all agent delegation per `references/agent-registry.md`
-4. On completion: display the project selection results to the user
+1. **Ask the user for a research domain** — before starting, prompt:
+   `"What domain or category should I research? (e.g., developer tools, fintech, health tech, AI/ML, education, gaming, e-commerce, IoT, security, or describe your own)"`
+   - If the user provides a domain: store it in `config.json` as `research_domain` and pass to orchestrator
+   - If the user says "anything" or gives no preference: use `"general technology trends"` as default
+   - If `/pdlc research <domain>` is provided inline: use that domain directly without prompting
+2. Initialize `.pdlc/` if needed, set `current_phase: "RESEARCH"`
+3. Spawn the pdlc-orchestrator agent with directive: execute RESEARCH phase with `research_domain: "[user's domain]"`
+4. The orchestrator handles all agent delegation per `references/agent-registry.md`, scoping all trend scanning to the specified domain
+5. On completion: display the project selection results to the user
 
 #### `plan`
 1. Verify RESEARCH is complete (project-selection.md exists)
@@ -93,9 +98,14 @@ Based on the parsed command:
 #### `sprint`
 1. Verify DESIGN is complete (tech-stack-decision.md exists)
 2. If not complete: inform user and suggest running `/pdlc plan` first
-3. Spawn pdlc-orchestrator with directive: execute one DEVELOPMENT + TESTING cycle
-4. The orchestrator increments current_sprint and manages the full sprint lifecycle
-5. On completion: display sprint results summary
+3. Spawn pdlc-orchestrator with directive: execute one full sprint cycle (DEVELOPMENT → TESTING → DEPLOYMENT → REVIEW → IMPROVE)
+4. The orchestrator increments current_sprint and manages the full sprint lifecycle including:
+   - 7-day development with session-based subtask commits
+   - Testing and deployment
+   - Sprint review + retrospective meetings
+   - 1:1 coaching and self-improvement
+   - Improvement items added as stories/issues for the next sprint backlog
+5. On completion: display sprint results summary, review highlights, and improvement actions queued for next sprint
 
 #### `deploy`
 1. Verify TESTING passed for the current sprint
@@ -165,6 +175,7 @@ Project state:
 - Current phase: [phase]
 - Current sprint: [N of M]
 - Tech stack: [from config.json if set]
+- Research domain: [from config.json research_domain, or "general technology trends"]
 - Execution mode: [agent-teams | subagent]
 
 Execution mode notes:

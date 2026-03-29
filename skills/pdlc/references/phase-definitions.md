@@ -45,17 +45,28 @@ The orchestrator MUST include the required reading list in every agent spawn inv
 
 ## Phase 1: RESEARCH
 
-**Purpose:** Identify trending real-world projects, technologies, and market opportunities worth building autonomously.
+**Purpose:** Identify trending real-world projects, technologies, and market opportunities worth building autonomously, scoped to a user-specified domain.
 
 ### Entry Criteria
 - PDLC initialized (`.pdlc/config.json` exists with `current_phase: "INIT"` or `"RESEARCH"`)
 - OR explicit `/pdlc research` command received
+- `research_domain` set in config.json (prompted by SKILL.md before orchestrator spawn)
+
+### Domain Scoping
+All research agents MUST scope their search to the domain specified in `config.json.research_domain`. Examples:
+- `"fintech"` → scan fintech trends, payment APIs, banking tools, crypto infrastructure
+- `"developer tools"` → scan CLI tools, IDE extensions, DevOps utilities, code quality
+- `"health tech"` → scan telemedicine, health APIs, fitness tracking, medical AI
+- `"education"` → scan ed-tech platforms, learning tools, course builders, tutoring AI
+- `"general technology trends"` → broad scan across all domains (default if user gives no preference)
+
+If the domain is too narrow and produces fewer than 3 viable candidates after wave 1, broaden to the nearest parent domain (e.g., "Rust CLI tools" → "developer tools") and retry.
 
 ### Activities
 1. **Trend scanning (parallel, wave 1):**
-   - Spawn trend-analyst: scan technology trends (GitHub trending, HackerNews, Product Hunt, tech blogs, social signals)
-   - Spawn search-specialist: deep-dive on specific emerging technologies and frameworks
-   - Spawn market-researcher: assess market dynamics, TAM/SAM/SOM for promising areas
+   - Spawn trend-analyst: scan technology trends **within the specified domain** (GitHub trending, HackerNews, Product Hunt, tech blogs, social signals)
+   - Spawn search-specialist: deep-dive on specific emerging technologies and frameworks **in the domain**
+   - Spawn market-researcher: assess market dynamics, TAM/SAM/SOM **for the domain**
    - Each agent writes findings to `.pdlc/research/trend-scan-YYYY-MM-DD.md`, `market-analysis-YYYY-MM-DD.md`
 
 2. **Competitive analysis (wave 2):**
@@ -684,11 +695,20 @@ All artifacts written to identical paths. Entry/exit criteria unchanged.
    - This ensures Claude Code always has accurate context about the project for future sessions
    - Check for: new directories/files, architecture changes, workflow changes, agent additions/removals, new integrations
 
+### Feed Improvements into Next Sprint
+Before transitioning, the orchestrator converts improvement findings into actionable next-sprint work:
+1. **From retrospective action items:** Create GitHub issues (via github-ops-manager) labeled `improvement`, `sprint-N+1`
+2. **From 1:1 coaching notes:** If coaching identified missing architecture docs or unclear specs, create `chore:` stories to fix them
+3. **From error analysis:** If patterns of failure found, create `fix:` stories to address root causes
+4. **From tech debt:** If refactoring-specialist flagged debt, create `refactor:` stories with estimated effort
+5. Write all improvement stories to `.pdlc/sprints/sprint-N+1/improvement-backlog.md` so they are picked up during next sprint planning
+6. The product-manager prioritizes these alongside feature stories in the next Sprint Planning Meeting
+
 ### Transition Decision
 After IMPROVE, the orchestrator decides:
-- **If `current_sprint < total_planned_sprints`:** increment `current_sprint`, set `current_phase: "DEVELOPMENT"`, continue to next sprint
-- **If `current_sprint >= total_planned_sprints`:** set `current_phase: "COMPLETE"`, write final project summary
-- **If roadmap needs major adjustment:** set `current_phase: "PLANNING"`, re-plan remaining sprints
+- **If `current_sprint < total_planned_sprints`:** increment `current_sprint`, set `current_phase: "DEVELOPMENT"`, continue to next sprint (improvement stories already queued in backlog)
+- **If `current_sprint >= total_planned_sprints`:** set `current_phase: "COMPLETE"`, write final project summary (include unresolved improvement items as future work)
+- **If roadmap needs major adjustment:** set `current_phase: "PLANNING"`, re-plan remaining sprints (improvement items feed into re-planning)
 
 ### Exit Criteria
 - Self-improvement log updated
