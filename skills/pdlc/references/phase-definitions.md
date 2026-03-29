@@ -535,10 +535,33 @@ All artifacts written to identical paths. Entry/exit criteria unchanged.
    - Spawn sre-engineer: verify deployment health, set up monitoring
    - Spawn kubernetes-specialist (if K8s): verify pod health, scaling
 
+4. **GitHub Release (step 4, after sprint PR merged):**
+   - Spawn github-ops-manager with operation: `release`
+   - **If `github-release` skill available (preferred):**
+     - Phase 1 — Pre-release sanitization:
+       - Secrets scanning (gitleaks) — BLOCKER if secrets found
+       - License file validation (MIT for public repos)
+       - README validation (install, usage, license sections)
+       - .gitignore validation (node_modules, .env, dist/)
+       - Dependency audit (npm audit)
+       - If issues found: fix, commit as `chore: prepare for release`
+     - Phase 2 — Release:
+       - Version from sprint: `v0.N.0` for sprint N (or semver from package.json)
+       - Create and push annotated tag
+       - Create GitHub release with auto-generated notes from commits
+   - **If skill not available:** Fall back to `gh release create vN.N.N --generate-notes`
+   - Return release URL to orchestrator
+
+   **Install the skill:**
+   ```bash
+   npx skills add https://github.com/jezweb/claude-skills --skill github-release
+   ```
+
 ### Exit Criteria
 - Application deployed and responding to health checks
 - Monitoring and alerting configured
 - Deployment verified (smoke tests pass)
+- GitHub release created with version tag (sanitization passed if `github-release` skill used)
 - `config.json` updated: phase transitions to `"REVIEW"`
 
 ### Error Handling

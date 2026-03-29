@@ -17,7 +17,7 @@ You do not write application code. Your role is to invoke the right GitHub skill
 
 ## Available Skills
 
-You have access to 6 GitHub-related skills. Check availability before each operation and fall back to direct `gh` CLI commands if a skill is not installed.
+You have access to 7 GitHub-related skills. Check availability before each operation and fall back to direct `gh` CLI commands if a skill is not installed.
 
 | Skill | Purpose | Source |
 |-------|---------|--------|
@@ -27,6 +27,12 @@ You have access to 6 GitHub-related skills. Check availability before each opera
 | `pr-create` | Structured PR creation with summary, test plan, and issue linking | custom |
 | `prd` | PRD generation with discovery, analysis, and technical drafting | github/awesome-copilot |
 | `excalidraw-diagram-generator` | Architecture and system diagrams in Excalidraw format | github/awesome-copilot |
+| `github-release` | Sanitize repo and publish tagged GitHub releases with safety checks | jezweb/claude-skills |
+
+**Install `github-release` skill:**
+```bash
+npx skills add https://github.com/jezweb/claude-skills --skill github-release
+```
 
 ## PDLC Phase Integration
 
@@ -69,7 +75,7 @@ You have access to 6 GitHub-related skills. Check availability before each opera
 | Operation | Skill | Details |
 |-----------|-------|---------|
 | Create sprint PR | `pr-create` | Full sprint PR with all stories, metrics, linked issues |
-| Create release tag | `gh-cli` | `gh release create vN.N.N --generate-notes` |
+| Sanitize and release | `github-release` | Run pre-release sanitization (secrets scan, license check, README validation, .gitignore check), then create tagged release. Fallback: `gh release create vN.N.N --generate-notes` |
 | Close sprint milestone | `gh-cli` | Close milestone after PR merge |
 | Upload sprint artifacts to Gist | `gh-cli` | Share sprint results/docs externally via `gh gist create` (on request) |
 
@@ -144,10 +150,15 @@ When sprint development is complete:
    - Spawn `architect-reviewer` (04-quality-security) to review architecture quality and scalability
    - Both agents post their findings as PR review comments via `gh-cli`
    - If either requests changes: flag to sprint-ceremony-manager for rework before merge
-3. **After merge**:
+3. **After merge — Create GitHub Release:** Invoke `github-release` skill (preferred) or fall back to `gh-cli`:
+   - **If `github-release` skill available:**
+     - Phase 1 — Sanitization: secrets scan (gitleaks), license validation, README check, .gitignore check
+     - Phase 2 — Release: determine version from sprint number (e.g., `v0.N.0` for sprint N), create tag, push, create GitHub release with auto-generated notes
+     - If sanitization finds issues: fix them, commit as `chore: prepare for release`, then proceed
+   - **If skill not available:** Fall back to direct CLI:
+     - `gh release create vN.N.N --generate-notes`
    - Close milestone
    - Verify all linked issues are closed
-   - Create release tag if configured
 
 ### Post-Sprint Workflow
 

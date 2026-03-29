@@ -46,6 +46,14 @@ git clone https://github.com/dipandhali2021/shipwright && cd shipwright && bash 
 
 Installs all 16 skills + 138 agents + skills-lock.json to `.claude/`.
 
+### Optional: GitHub Release Skill
+
+For automated GitHub releases with pre-release sanitization (secrets scanning, license/README validation) after each sprint:
+
+```bash
+npx skills add https://github.com/jezweb/claude-skills --skill github-release
+```
+
 ### Manual Installation
 
 1. Clone this repository
@@ -245,7 +253,7 @@ The `github-ops-manager` agent coordinates all GitHub workflows:
 - **Commits** — Conventional commits with staggered timestamps per agent
 - **Issues** — One issue per user story, updated with subtask progress
 - **PRs** — Sprint PR with all stories, linked issues, reviewed by code-reviewer and architect-reviewer
-- **Releases** — Tagged releases after each sprint
+- **Releases** — Tagged GitHub release after each sprint using `github-release` skill (with pre-release sanitization: secrets scan, license check, README validation) or `gh release create` fallback
 - **Gists** — Share sprint artifacts externally
 
 ### External Skills
@@ -255,6 +263,7 @@ The `github-ops-manager` agent coordinates all GitHub workflows:
 | Sprint Ceremonies | sprint-planning, scrum-master, task-estimation, standup-meeting, sprint-retrospective |
 | Roadmap | roadmap-update |
 | GitHub | git-commit, github-issues, gh-cli, pr-create, prd, excalidraw-diagram-generator |
+| Release | github-release (sanitize + publish tagged releases) |
 | Video | remotion-best-practices |
 
 ---

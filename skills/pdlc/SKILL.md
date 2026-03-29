@@ -204,8 +204,14 @@ Available external skills (check before spawning):
 - Sprint ceremony: sprint-planning, scrum-master, task-estimation, standup-meeting, sprint-retrospective
 - Roadmap: roadmap-update
 - GitHub: git-commit, github-issues, gh-cli, pr-create, prd, excalidraw-diagram-generator
+- Release: github-release (sanitize + publish tagged GitHub releases after each sprint)
 - Video: remotion-best-practices
-The orchestrator uses these skills to enhance ceremonies and GitHub workflows when available. If a skill is not installed, it falls back to built-in logic. GitHub skills are coordinated by the github-ops-manager (see `agents/github-ops-manager.md`); code-reviewer and architect-reviewer agents review sprint PRs before merge.
+The orchestrator uses these skills to enhance ceremonies and GitHub workflows when available. If a skill is not installed, it falls back to built-in logic. GitHub skills are coordinated by the github-ops-manager (see `agents/github-ops-manager.md`); code-reviewer and architect-reviewer agents review sprint PRs before merge. The `github-release` skill is invoked after each sprint's PR is merged to create a versioned release with pre-release sanitization (secrets scan, license check, README validation).
+
+**Install github-release skill:**
+```bash
+npx skills add https://github.com/jezweb/claude-skills --skill github-release
+```
 
 ### Step 4: Report Results
 
@@ -216,7 +222,7 @@ After the orchestrator completes, read the produced artifacts and present a conc
 - **After DESIGN:** Show tech stack decision and architecture summary
 - **After DEVELOPMENT:** Show stories completed vs planned, subtasks done/total per agent, commit count per day. Sprint execution follows a 7-day schedule (Mon planning → Sun integration) with session-based subtask commits.
 - **After TESTING:** Show test pass rate, issues found/resolved
-- **After DEPLOYMENT:** Show deployment status
+- **After DEPLOYMENT:** Show deployment status, release version tag, and release URL. If `github-release` skill was used, include sanitization results (secrets scan, license, README).
 - **After REVIEW:** Show velocity trend, retrospective highlights
 - **After IMPROVE:** Show top recommendations and adaptations made
 

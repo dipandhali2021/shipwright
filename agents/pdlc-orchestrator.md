@@ -414,11 +414,16 @@ Research artifacts are committed individually, not as a batch:
    - **code-reviewer** (04-quality-security) reviews the PR for code quality, patterns, and best practices
    - **architect-reviewer** (04-quality-security) reviews the PR for architecture quality and scalability
    - Both reviewers post findings as PR comments via `gh-cli`; rework items flagged before merge
-6. **Upload sprint artifacts to Gist** (optional, on request) — Spawn github-ops-manager:
+6. **Create GitHub Release** — Spawn github-ops-manager with operation: `release`:
+   - **If `github-release` skill available:** Run pre-release sanitization (secrets scan, license check, README validation, .gitignore check, dependency audit), then create tagged release with auto-generated notes
+   - **If skill not available:** Fall back to `gh release create vN.N.N --generate-notes`
+   - Version: `v0.N.0` for sprint N (or semver from package.json)
+   - Return release URL for user reference
+7. **Upload sprint artifacts to Gist** (optional, on request) — Spawn github-ops-manager:
    - Upload sprint results, architecture docs, or any PDLC artifacts to GitHub Gist for external sharing
    - Use `gh gist create` with multiple files in a single gist
    - Return the Gist URL to the orchestrator for user reference
-7. Transition to TESTING phase → DEPLOYMENT → then REVIEW + IMPROVE (every sprint MUST complete the full cycle)
+8. Transition to TESTING phase → DEPLOYMENT → then REVIEW + IMPROVE (every sprint MUST complete the full cycle)
 
 ### Sunday PM: Sprint Review Meeting
 
