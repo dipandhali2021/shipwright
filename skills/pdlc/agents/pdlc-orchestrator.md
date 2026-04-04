@@ -91,8 +91,20 @@ If `.pdlc/config.json` does not exist, initialize a new PDLC project:
    ├── sprints/
    └── retrospective/
    ```
-2. Write initial config.json with `current_phase: "INIT"`
-3. Transition to the requested phase (default: RESEARCH)
+2. **Create or update `.gitignore`** — Ensure the project's `.gitignore` excludes local development tooling that should NOT be pushed to the repository:
+   ```
+   # Claude Code local tooling (agents and skills are local dev tools, not project source)
+   .claude/
+
+   # PDLC working state (optional — remove if you want to track sprint artifacts in git)
+   # .pdlc/
+   ```
+   - `.claude/` MUST always be gitignored — it contains installed agents/skills that are local to the developer's machine
+   - `.pdlc/` is optionally gitignored — some teams want sprint artifacts in version control
+   - If `.gitignore` already exists, append these entries (don't overwrite existing rules)
+   - Commit as `chore: add .gitignore with Claude Code exclusions`
+3. Write initial config.json with `current_phase: "INIT"`
+4. Transition to the requested phase (default: RESEARCH)
 
 Use the templates from `references/templates.md` for all file creation.
 

@@ -373,6 +373,7 @@ All artifacts are written to identical paths as subagent mode. Entry/exit criter
 - Basic tests exist for new code
 - Code compiles/runs without errors
 - Git history shows day-by-day commit progression with staggered timestamps per agent (5–12 commits per agent per day)
+- **`.gitignore` includes `.claude/`** — the `.claude/` folder (agents, skills) must never be pushed to the project repo
 - **Project README.md updated** with features built this sprint (installation, usage, feature list — incrementally updated each sprint)
 - Sprint agent log written to `.pdlc/sprints/sprint-N/agent-log.md` with daily subtask progress per agent
 - Standup log written to `.pdlc/sprints/sprint-N/standups.md` with subtask tracking (done/total)
