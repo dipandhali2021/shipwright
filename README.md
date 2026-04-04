@@ -86,6 +86,7 @@ Interactive TUI to browse and selectively install/uninstall agents.
 | `/pdlc dashboard` | Show project dashboard with metrics |
 | `/pdlc status` | Show current project state |
 | `/pdlc roadmap` | Create or update the product roadmap |
+| `/pdlc delete` | Full project cleanup — remove all PDLC data, dependencies, build artifacts, source files |
 
 Natural language also works:
 - "what should I build" / "find trending projects" triggers **research**

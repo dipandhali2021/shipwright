@@ -32,6 +32,7 @@ Parse the user's input to determine which command to execute:
 | `/pdlc dashboard` | **dashboard** | Regenerate and display dashboard |
 | `/pdlc roadmap` | **roadmap** | PLANNING (create) or REVIEW (update) |
 | `/pdlc status` | **status** | Show current state |
+| `/pdlc delete` | **delete** | Full project cleanup (removes all PDLC data, build artifacts, dependencies) |
 
 Also match natural language:
 - "what should I build" / "find trending projects" → **research**
@@ -40,6 +41,7 @@ Also match natural language:
 - "how's the project going" / "show progress" → **status**
 - "sprint review" / "retrospective" → **review**
 - "show roadmap" / "update roadmap" / "what's the plan" → **roadmap**
+- "clean up" / "delete project" / "remove everything" → **delete**
 
 ## Execution Flow
 
@@ -139,6 +141,76 @@ Based on the parsed command:
    - REVIEW → continue review
    - IMPROVE → continue improvement, then start next sprint
    - COMPLETE → inform user the project is done, offer to start a new one
+
+#### `delete`
+Full project cleanup — removes ALL PDLC data, build artifacts, dependencies, and generated files. This is a **destructive, irreversible operation**.
+
+1. **Confirm with user** — Before deleting anything, show what will be removed and ask for explicit confirmation:
+   ```
+   ⚠️  This will permanently delete the entire project:
+
+   Project: [name from config.json]
+   Sprints completed: [N]
+   Last phase: [phase]
+
+   The following will be removed:
+   - .pdlc/              (all PDLC state, research, sprint data, meeting transcripts)
+   - node_modules/       (npm dependencies)
+   - dist/ / build/      (build output)
+   - .next/              (Next.js cache)
+   - __pycache__/        (Python cache)
+   - venv/ / .venv/      (Python virtual environments)
+   - target/             (Rust/Java build output)
+   - vendor/             (Go/PHP vendor dependencies)
+   - *.lock files        (package-lock.json, yarn.lock, pnpm-lock.yaml — if you want a clean reinstall)
+   - .env                (environment files — BACKUP FIRST if needed)
+   - All source code and project files
+
+   This CANNOT be undone. Type "yes" to confirm.
+   ```
+
+2. **If user confirms "yes"** — Execute cleanup in order:
+   a. **Remove PDLC data:**
+      ```bash
+      rm -rf .pdlc/
+      ```
+   b. **Remove dependency directories:**
+      ```bash
+      rm -rf node_modules/ vendor/ venv/ .venv/ __pycache__/ target/
+      ```
+   c. **Remove build artifacts:**
+      ```bash
+      rm -rf dist/ build/ .next/ out/ .nuxt/ .output/ coverage/ .turbo/
+      ```
+   d. **Remove all project source files and directories** (everything except `.git/` and `.claude/`):
+      ```bash
+      # Remove all files and directories except .git and .claude
+      find . -maxdepth 1 ! -name '.' ! -name '.git' ! -name '.claude' -exec rm -rf {} +
+      ```
+   e. **Clean git state** (optional, ask user):
+      - "Do you also want to reset git history? (This removes all commits)"
+      - If yes: `rm -rf .git/` — fully clean directory
+      - If no: keep `.git/` so the repo history is preserved
+
+3. **If user says no** — Abort, do nothing.
+
+4. **After cleanup** — Display summary:
+   ```
+   ✓ Project "[name]" fully cleaned up.
+     - PDLC data removed
+     - Dependencies removed
+     - Build artifacts removed
+     - Source files removed
+     - [Git history preserved / Git history removed]
+
+   Ready for a new project. Run /pdlc or /pdlc research to start fresh.
+   ```
+
+**Safety rules:**
+- NEVER run delete without explicit user confirmation
+- NEVER delete `.claude/` — that contains the user's installed agents/skills
+- NEVER delete files outside the current working directory
+- If `.pdlc/config.json` doesn't exist, inform user there's no PDLC project to delete
 
 ### Step 2.5: Detect Execution Mode
 
